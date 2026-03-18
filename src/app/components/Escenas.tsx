@@ -83,9 +83,7 @@ export function Escenas() {
                 className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-2xl p-5 border border-gray-700/50 hover:border-gray-600/50 transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-4">
-                  <div
-                    className={`${scene.color} w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0`}
-                  >
+                  <div className="border-2 border-yellow-500 bg-black w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-yellow-500">
                     {scene.icon}
                   </div>
                   <div>
@@ -102,8 +100,8 @@ export function Escenas() {
               className="bg-gradient-to-br from-gray-800/30 to-gray-900/30 rounded-2xl p-5 border border-gray-700/50 border-dashed hover:border-gray-600/50 transition-all cursor-pointer"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-gray-700/30 flex items-center justify-center flex-shrink-0">
-                  <Plus size={24} className="text-gray-500" />
+                <div className="border-2 border-yellow-500 bg-black w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0 text-yellow-500">
+                  <Plus size={24} />
                 </div>
                 <div>
                   <h3 className="mb-1">Nueva escena</h3>
@@ -144,9 +142,7 @@ export function Escenas() {
               className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-2xl p-6 border border-gray-700/50 hover:border-gray-600/50 transition-all cursor-pointer hover:scale-[1.01]"
             >
               <div className="flex items-center gap-5">
-                <div
-                  className={`${scene.color} w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0`}
-                >
+                <div className="border-2 border-yellow-500 bg-black w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 text-yellow-500">
                   {scene.icon}
                 </div>
                 <div>
@@ -163,8 +159,8 @@ export function Escenas() {
             className="bg-gradient-to-br from-gray-800/30 to-gray-900/30 rounded-2xl p-6 border border-gray-700/50 border-dashed hover:border-gray-600/50 transition-all cursor-pointer hover:scale-[1.01]"
           >
             <div className="flex items-center gap-5">
-              <div className="w-16 h-16 rounded-2xl bg-gray-700/30 flex items-center justify-center flex-shrink-0">
-                <Plus size={28} className="text-gray-500" />
+              <div className="border-2 border-yellow-500 bg-black w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 text-yellow-500">
+                <Plus size={28} />
               </div>
               <div>
                 <h3 className="text-lg mb-2">Nueva escena</h3>

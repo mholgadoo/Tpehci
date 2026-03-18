@@ -329,7 +329,7 @@ export function Espacios() {
           <Link
             key={space.id}
             to={`/espacio/${space.id}`}
-            className={`rounded-3xl border border-gray-700/50 bg-gradient-to-br from-gray-800/40 to-gray-900/40 transition-all ${
+            className={`rounded-3xl border border-gray-700/50 bg-gradient-to-br from-gray-900/80 to-black/80 transition-all ${
               isMobile
                 ? "flex items-center justify-between p-5 hover:border-gray-600/50"
                 : "p-6 hover:scale-[1.02] hover:border-gray-600/50"
@@ -337,7 +337,7 @@ export function Espacios() {
           >
             <div className={isMobile ? "flex items-center gap-4" : ""}>
               <div
-                className={`mb-5 flex items-center justify-center rounded-2xl bg-gray-800/50 p-3 text-gray-300 ${
+                className={`mb-5 flex items-center justify-center rounded-2xl bg-black border-2 border-yellow-500 p-3 text-yellow-500 ${
                   isMobile ? "mb-0" : ""
                 }`}
               >
@@ -365,13 +365,13 @@ export function Espacios() {
         <button
           type="button"
           onClick={() => setIsSpaceModalOpen(true)}
-          className={`rounded-3xl border border-dashed border-gray-700/50 bg-gradient-to-br from-gray-800/30 to-gray-900/30 text-left transition-all hover:border-gray-600/50 ${
+          className={`rounded-3xl border border-dashed border-gray-700/50 bg-gradient-to-br from-gray-900/60 to-black/60 text-left transition-all hover:border-gray-600/50 ${
             isMobile
               ? "flex items-center gap-4 p-5"
               : "flex min-h-[220px] flex-col items-center justify-center p-6 text-center hover:scale-[1.02]"
           }`}
         >
-          <div className="flex items-center justify-center rounded-2xl bg-gray-800/30 p-3 text-gray-500">
+          <div className="flex items-center justify-center rounded-2xl bg-black border-2 border-yellow-500 p-3 text-yellow-500">
             <Plus size={24} />
           </div>
           <div className={isMobile ? "" : "mt-3"}>

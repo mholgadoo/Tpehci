@@ -31,10 +31,10 @@ export function Root() {
               <Link
                 key={path}
                 to={path}
-                className={`flex flex-col items-center gap-1 px-4 py-2 ${
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
                   isActive(path) && (path !== "/" || location.pathname === "/")
-                    ? "text-yellow-500"
-                    : "text-gray-400"
+                    ? "bg-yellow-500 text-black border-2 border-yellow-500"
+                    : "bg-black text-yellow-500"
                 }`}
               >
                 <Icon size={24} />
@@ -63,14 +63,14 @@ export function Root() {
               to={path}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all ${
                 isActive(path) && (path !== "/" || location.pathname === "/")
-                  ? "bg-yellow-600 text-white"
-                  : "text-gray-400 hover:bg-gray-800/50"
+                  ? "bg-yellow-500 text-black border-2 border-yellow-500"
+                  : "bg-black text-yellow-500 hover:opacity-80"
               }`}
             >
               <Icon size={20} />
               <span>{label}</span>
             </Link>
-          ))}
+          ))}}
         </div>
       </nav>
 
