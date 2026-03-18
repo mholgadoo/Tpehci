@@ -76,7 +76,7 @@ const initialHomes: Home[] = [
         name: "Sala de Estar",
         icon: <Armchair size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <Lightbulb size={14} /> },
           { icon: <Speaker size={14} /> },
           { icon: <Blinds size={14} /> },
@@ -88,7 +88,7 @@ const initialHomes: Home[] = [
         name: "Dormitorio",
         icon: <Bed size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <Lightbulb size={14} /> },
           { icon: <Blinds size={14} /> },
           { icon: <Wind size={14} /> },
@@ -99,7 +99,7 @@ const initialHomes: Home[] = [
         name: "Cocina",
         icon: <ChefHat size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <CookingPot size={14} /> },
           { icon: <Bell size={14} /> },
         ],
@@ -109,7 +109,7 @@ const initialHomes: Home[] = [
         name: "Baño",
         icon: <Bath size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <Wind size={14} /> },
         ],
       },
@@ -118,7 +118,7 @@ const initialHomes: Home[] = [
         name: "Oficina",
         icon: <Monitor size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <Speaker size={14} /> },
           { icon: <Blinds size={14} /> },
         ],
@@ -128,7 +128,7 @@ const initialHomes: Home[] = [
         name: "Garaje",
         icon: <Car size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <DoorOpen size={14} /> },
           { icon: <Bell size={14} /> },
         ],
@@ -138,7 +138,7 @@ const initialHomes: Home[] = [
         name: "Jardín",
         icon: <TreePine size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <Droplet size={14} /> },
           { icon: <Bell size={14} /> },
         ],
@@ -148,7 +148,7 @@ const initialHomes: Home[] = [
         name: "Terraza",
         icon: <Sun size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <Speaker size={14} /> },
           { icon: <Blinds size={14} /> },
         ],
@@ -165,7 +165,7 @@ const initialHomes: Home[] = [
         name: "Sala de Estar",
         icon: <Armchair size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <Speaker size={14} /> },
           { icon: <Blinds size={14} /> },
         ],
@@ -175,7 +175,7 @@ const initialHomes: Home[] = [
         name: "Cocina",
         icon: <ChefHat size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <CookingPot size={14} /> },
         ],
       },
@@ -184,7 +184,7 @@ const initialHomes: Home[] = [
         name: "Terraza",
         icon: <Sun size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <Speaker size={14} /> },
         ],
       },
@@ -200,7 +200,7 @@ const initialHomes: Home[] = [
         name: "Oficina",
         icon: <Monitor size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <Speaker size={14} /> },
           { icon: <Blinds size={14} /> },
         ],
@@ -210,7 +210,7 @@ const initialHomes: Home[] = [
         name: "Office",
         icon: <ChefHat size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-blue-500" },
+          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
           { icon: <CookingPot size={14} /> },
         ],
       },
@@ -313,7 +313,7 @@ export function Espacios() {
           <button
             type="button"
             onClick={() => setSessionClosed(false)}
-            className="mt-6 rounded-[18px] bg-[#3f68ff] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#5077ff]"
+            className="mt-6 rounded-[18px] bg-[#fbbf24] px-5 py-3 text-sm font-medium text-black transition-colors hover:bg-[#f59e0b]"
           >
             Volver a entrar
           </button>
@@ -391,7 +391,7 @@ export function Espacios() {
         <button
           type="button"
           onClick={() => setIsSpaceModalOpen(true)}
-          className="mt-6 inline-flex items-center gap-2 rounded-[18px] bg-[#3f68ff] px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-[#5077ff]"
+          className="mt-6 inline-flex items-center gap-2 rounded-[18px] bg-[#fbbf24] px-5 py-3 text-sm font-medium text-black transition-colors hover:bg-[#f59e0b]"
         >
           <Plus size={16} />
           Nuevo espacio
@@ -401,8 +401,10 @@ export function Espacios() {
 
   return (
     <>
-      <div className={isMobile ? "px-6 pb-20 pt-12" : "mx-auto max-w-7xl px-12 py-8"}>
-        <div className={isMobile ? "mb-8" : "mb-10"}>
+      <div className="relative">
+        <div className="absolute inset-x-0 top-0 h-40 bg-[radial-gradient(circle_at_top,#fbbf24_0%,rgba(251,191,36,0.22)_26%,transparent_70%)]" />
+        <div className={isMobile ? "relative px-6 pb-20 pt-12" : "relative mx-auto max-w-7xl px-12 py-8"}>
+          <div className={isMobile ? "mb-8" : "mb-10"}>
           <div
             className={
               isMobile
@@ -445,7 +447,7 @@ export function Espacios() {
                         onClick={() => setSelectedHomeId(home.id)}
                         className={`flex w-full items-start justify-between rounded-[22px] border px-4 py-3 text-left transition-all ${
                           home.id === selectedHomeId
-                            ? "border-[#3f68ff] bg-[#17203a]"
+                            ? "border-[#fbbf24] bg-[#000000]"
                             : "border-[#202636] bg-[#171b26] hover:border-[#33405a] hover:bg-[#1a2030]"
                         }`}
                       >
@@ -476,11 +478,11 @@ export function Espacios() {
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
-                  className={`flex items-center justify-center rounded-full bg-gray-800/50 transition-all hover:bg-gray-800 ${
+                  className={`flex items-center justify-center rounded-full bg-[#000000] border border-[#fbbf24] transition-all hover:bg-[#1a1a1a] ${
                     isMobile ? "h-12 w-12" : "h-14 w-14"
                   }`}
                 >
-                  <div className="flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-[#24365f] to-[#3f68ff] text-sm font-semibold text-white">
+                  <div className="flex h-full w-full items-center justify-center rounded-full bg-[#000000] text-sm font-semibold text-[#fbbf24]">
                     {getInitials(selectedAccount.name) || <User size={20} />}
                   </div>
                 </button>
@@ -541,11 +543,13 @@ export function Espacios() {
 
         {spacesContent}
       </div>
+      </div>
 
       <Dialog open={isSpaceModalOpen} onOpenChange={setIsSpaceModalOpen}>
         <DialogContent className="w-[min(92vw,760px)] rounded-[32px] border border-[#2b3042] bg-[#0f1219] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] [&>button]:hidden">
-          <div className="overflow-hidden rounded-[32px]">
-            <div className="border-b border-[#1f2432] px-6 pb-4 pt-6 sm:px-8">
+          <div className="relative overflow-hidden rounded-[32px]">
+            <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#fbbf24_0%,rgba(251,191,36,0.22)_26%,transparent_70%)]" />
+            <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6 sm:px-8">
               <DialogTitle className="text-[24px] font-semibold text-white">
                 Nuevo Espacio
               </DialogTitle>
@@ -554,7 +558,7 @@ export function Espacios() {
               </DialogDescription>
             </div>
 
-            <div className="space-y-7 px-6 pb-8 pt-6 sm:px-8">
+            <div className="relative space-y-7 px-6 pb-8 pt-6 sm:px-8">
               <div className="space-y-3">
                 <label className="text-[11px] font-semibold tracking-[0.22em] text-[#7f879c] uppercase">
                   Nombre
@@ -585,7 +589,7 @@ export function Espacios() {
                         onClick={() => setSelectedType(type.id)}
                         className={`flex flex-col items-center justify-center gap-3 rounded-[22px] border px-3 py-5 text-center transition-all ${
                           isSelected
-                            ? "border-[#3f68ff] bg-[#17203a] text-[#7ea1ff]"
+                            ? "border-[#fbbf24] bg-[#000000] text-[#fbbf24]"
                             : "border-[#202636] bg-[#171b26] text-[#aab3c8]"
                         }`}
                       >
@@ -605,7 +609,7 @@ export function Espacios() {
                 disabled={!newSpaceName.trim() || !selectedType}
                 className={`w-full rounded-[20px] py-4 text-[15px] font-medium ${
                   newSpaceName.trim() && selectedType
-                    ? "bg-[#3f68ff] text-white"
+                    ? "bg-[#fbbf24] text-black"
                     : "bg-[#202636] text-[#6b7280]"
                 }`}
               >
@@ -618,8 +622,9 @@ export function Espacios() {
 
       <Dialog open={isHomeModalOpen} onOpenChange={setIsHomeModalOpen}>
         <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#2b3042] bg-[#0f1219] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] [&>button]:hidden">
-          <div className="overflow-hidden rounded-[32px]">
-            <div className="border-b border-[#1f2432] px-6 pb-4 pt-6 sm:px-8">
+          <div className="relative overflow-hidden rounded-[32px]">
+            <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#fbbf24_0%,rgba(251,191,36,0.22)_26%,transparent_70%)]" />
+            <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6 sm:px-8">
               <DialogTitle className="text-[24px] font-semibold text-white">
                 Agregar hogar
               </DialogTitle>
@@ -628,7 +633,7 @@ export function Espacios() {
               </DialogDescription>
             </div>
 
-            <div className="space-y-6 px-6 pb-8 pt-6 sm:px-8">
+            <div className="relative space-y-6 px-6 pb-8 pt-6 sm:px-8">
               <div className="space-y-3">
                 <label className="text-[11px] font-semibold tracking-[0.22em] text-[#7f879c] uppercase">
                   Nombre
@@ -665,7 +670,7 @@ export function Espacios() {
                 disabled={!newHomeName.trim()}
                 className={`w-full rounded-[20px] py-4 text-[15px] font-medium ${
                   newHomeName.trim()
-                    ? "bg-[#3f68ff] text-white"
+                    ? "bg-[#fbbf24] text-black"
                     : "bg-[#202636] text-[#6b7280]"
                 }`}
               >

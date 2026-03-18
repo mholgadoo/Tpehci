@@ -21,11 +21,11 @@ export function Root() {
 
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-[#0a0e1a] text-white">
+      <div className="min-h-screen bg-[#000000] text-white">
         <Outlet />
         
         {/* Bottom Navigation - Mobile */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-[#0f1420] border-t border-gray-800">
+        <nav className="fixed bottom-0 left-0 right-0 bg-[#000000] border-t border-gray-800">
           <div className="max-w-2xl mx-auto flex justify-around items-center h-16">
             {navItems.map(({ path, label, icon: Icon }) => (
               <Link
@@ -33,7 +33,7 @@ export function Root() {
                 to={path}
                 className={`flex flex-col items-center gap-1 px-4 py-2 ${
                   isActive(path) && (path !== "/" || location.pathname === "/")
-                    ? "text-blue-500"
+                    ? "text-yellow-500"
                     : "text-gray-400"
                 }`}
               >
@@ -49,9 +49,9 @@ export function Root() {
 
   // Desktop Layout
   return (
-    <div className="min-h-screen bg-[#0a0e1a] text-white flex">
+    <div className="min-h-screen bg-[#000000] text-white flex">
       {/* Sidebar Navigation - Desktop */}
-      <nav className="w-64 bg-[#0f1420] border-r border-gray-800 flex flex-col">
+      <nav className="w-64 bg-[#000000] border-r border-gray-800 flex flex-col">
         <div className="p-6">
           <h1 className="text-2xl mb-8">Mi Hogar</h1>
         </div>
@@ -63,7 +63,7 @@ export function Root() {
               to={path}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all ${
                 isActive(path) && (path !== "/" || location.pathname === "/")
-                  ? "bg-blue-600 text-white"
+                  ? "bg-yellow-600 text-white"
                   : "text-gray-400 hover:bg-gray-800/50"
               }`}
             >

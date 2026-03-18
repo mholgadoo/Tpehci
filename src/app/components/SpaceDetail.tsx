@@ -209,8 +209,7 @@ export function SpaceDetail() {
   const spaceName = spaceNames[normalizedSpaceId] || "Espacio";
   const activeDevices = devices.filter((device) => device.status === "on").length;
   const availableTypes =
-    allowedDevicesBySpace[normalizedSpaceId] ||
-    (Object.keys(deviceOptions) as DeviceKind[]);
+    Object.keys(deviceOptions) as DeviceKind[];
 
   const toggleDevice = (deviceId: string) => {
     setDevices(
@@ -254,7 +253,7 @@ export function SpaceDetail() {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
         <div className="relative w-full max-w-[520px] overflow-hidden rounded-[32px] bg-[#080a10] shadow-[0_24px_80px_rgba(0,0,0,0.6)]">
-          <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#2b49b9_0%,rgba(43,73,185,0.22)_26%,transparent_70%)]" />
+          <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#fbbf24_0%,rgba(251,191,36,0.22)_26%,transparent_70%)]" />
 
           <div className="relative px-6 pb-8 pt-8 sm:px-8">
             <div className="mb-8 flex items-center justify-between">
@@ -273,7 +272,7 @@ export function SpaceDetail() {
                 <label className="text-[11px] font-semibold tracking-wider text-gray-400">
                   NOMBRE
                 </label>
-                <div className="rounded-2xl border border-[#335bd1] bg-[#292c38] px-5 py-4">
+                <div className="rounded-2xl border border-[#fbbf24] bg-[#292c38] px-5 py-4">
                   <input
                     type="text"
                     placeholder="Lámpara de techo"
@@ -288,7 +287,7 @@ export function SpaceDetail() {
                 <label className="text-[11px] font-semibold tracking-wider text-gray-400">
                   TIPO DE DISPOSITIVO
                 </label>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
                   {availableTypes.map((type) => {
                     const option = deviceOptions[type];
                     const isSelected = selectedDeviceType === type;
@@ -300,7 +299,7 @@ export function SpaceDetail() {
                         onClick={() => setSelectedDeviceType(type)}
                         className={`flex min-h-[110px] flex-col items-center justify-center gap-3 rounded-2xl border px-3 py-4 transition-all ${
                           isSelected
-                            ? "border border-blue-500/50 bg-blue-600/20 text-blue-400"
+                            ? "border border-yellow-500/50 bg-yellow-600/20 text-yellow-400"
                             : "border border-transparent bg-[#24262d] text-gray-400 hover:bg-[#2c2f38]"
                         }`}
                       >
@@ -385,7 +384,7 @@ export function SpaceDetail() {
                     <div
                       className={`w-[46px] h-[46px] rounded-[14px] flex items-center justify-center ${
                         device.status === "on"
-                          ? "bg-[#1a2035] text-[#4171ff]"
+                          ? "bg-[#000000] text-[#fbbf24]"
                           : "bg-[#20232d] text-[#6b7280]"
                       }`}
                     >
@@ -395,7 +394,7 @@ export function SpaceDetail() {
                       <h3 className="text-[15px] font-medium text-white mb-0.5">{device.name}</h3>
                       <p
                         className={`text-[13px] ${
-                          device.status === "on" ? "text-[#4171ff]" : "text-[#6b7280]"
+                          device.status === "on" ? "text-[#fbbf24]" : "text-[#6b7280]"
                         }`}
                       >
                         {device.status === "on" ? "Encendido" : "Apagado"}
@@ -412,7 +411,7 @@ export function SpaceDetail() {
                       type="button"
                       onClick={() => toggleDevice(device.id)}
                       className={`relative inline-flex h-[32px] w-[56px] items-center rounded-full p-[2px] transition-colors duration-200 ${
-                        device.status === "on" ? "bg-[#4171ff]" : "bg-[#454955]"
+                        device.status === "on" ? "bg-[#fbbf24]" : "bg-[#454955]"
                       }`}
                     >
                       <span
@@ -428,7 +427,7 @@ export function SpaceDetail() {
                   <div className="px-1 pb-1 pt-1 relative">
                     <div className="relative w-full h-[6px] bg-[#2a2d3d] rounded-full">
                       <div
-                        className="absolute left-0 top-0 h-full bg-[#4171ff] rounded-full transition-all duration-150"
+                        className="absolute left-0 top-0 h-full bg-[#fbbf24] rounded-full transition-all duration-150"
                         style={{ width: `${device.brightness || 0}%` }}
                       />
                       <input
