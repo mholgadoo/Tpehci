@@ -70,7 +70,7 @@ export function Root() {
               <Icon size={20} />
               <span>{label}</span>
             </Link>
-          ))}}
+          ))}
         </div>
       </nav>
 

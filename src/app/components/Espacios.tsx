@@ -607,10 +607,10 @@ export function Espacios() {
                 type="button"
                 onClick={handleAddSpace}
                 disabled={!newSpaceName.trim() || !selectedType}
-                className={`w-full rounded-[20px] py-4 text-[15px] font-medium ${
+                className={`w-full rounded-[20px] py-4 text-[15px] font-medium border-2 transition-all ${
                   newSpaceName.trim() && selectedType
-                    ? "bg-[#fbbf24] text-black"
-                    : "bg-[#202636] text-[#6b7280]"
+                    ? "bg-black text-yellow-500 border-yellow-500"
+                    : "bg-[#202636] text-[#6b7280] border-[#202636]"
                 }`}
               >
                 Agregar espacio
@@ -668,10 +668,10 @@ export function Espacios() {
                 type="button"
                 onClick={handleAddHome}
                 disabled={!newHomeName.trim()}
-                className={`w-full rounded-[20px] py-4 text-[15px] font-medium ${
+                className={`w-full rounded-[20px] py-4 text-[15px] font-medium border-2 transition-all ${
                   newHomeName.trim()
-                    ? "bg-[#fbbf24] text-black"
-                    : "bg-[#202636] text-[#6b7280]"
+                    ? "bg-black text-yellow-500 border-yellow-500"
+                    : "bg-[#202636] text-[#6b7280] border-[#202636]"
                 }`}
               >
                 Agregar hogar
