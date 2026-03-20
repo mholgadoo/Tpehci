@@ -1,41 +1,43 @@
-import React, { useState, ReactNode } from "react";
+import React, { ReactNode, useEffect, useMemo, useState } from "react";
 import {
   Armchair,
   Bath,
   Bed,
-  ChefHat,
-  Monitor,
-  Car,
-  TreePine,
-  Sun,
-  Lightbulb,
-  Speaker,
-  Blinds,
   Bell,
-  Wind,
+  Blinds,
+  BookOpen,
+  Car,
+  Check,
+  ChefHat,
+  ChevronLeft,
+  ChevronRight,
   CookingPot,
   DoorOpen,
   Droplet,
-  Plus,
-  Music,
-  BookOpen,
-  Moon,
   Film,
-  Zap,
   Heart,
+  Lightbulb,
+  Monitor,
+  Moon,
+  Music,
+  Speaker,
+  Sun,
   Sunset,
+  TreePine,
   Tv,
+  Wind,
+  Zap,
 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Textarea } from "./ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface DeviceAttribute {
@@ -61,11 +63,30 @@ interface Spaces {
   [key: string]: Space;
 }
 
+interface CreateSceneDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (scene: {
+    id?: string;
+    name: string;
+    color: string;
+    description: string;
+    devices: DeviceAttribute[];
+  }) => void;
+  initialScene?: {
+    id?: string;
+    name: string;
+    color: string;
+    description: string;
+    devices: DeviceAttribute[];
+  } | null;
+}
+
 const spaceData: Spaces = {
   sala: {
     id: "sala",
     name: "Sala de Estar",
-    icon: <Armchair size={24} />,
+    icon: <Armchair size={22} />,
     devices: [
       { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
       { icon: <Lightbulb size={14} />, name: "Luz Ambiental" },
@@ -77,7 +98,7 @@ const spaceData: Spaces = {
   dormitorio: {
     id: "dormitorio",
     name: "Dormitorio",
-    icon: <Bed size={24} />,
+    icon: <Bed size={22} />,
     devices: [
       { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
       { icon: <Lightbulb size={14} />, name: "Luz de Noche" },
@@ -88,7 +109,7 @@ const spaceData: Spaces = {
   cocina: {
     id: "cocina",
     name: "Cocina",
-    icon: <ChefHat size={24} />,
+    icon: <ChefHat size={22} />,
     devices: [
       { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
       { icon: <CookingPot size={14} />, name: "Horno" },
@@ -98,7 +119,7 @@ const spaceData: Spaces = {
   bano: {
     id: "bano",
     name: "Baño",
-    icon: <Bath size={24} />,
+    icon: <Bath size={22} />,
     devices: [
       { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
       { icon: <Wind size={14} />, name: "Extracto Humedad" },
@@ -107,7 +128,7 @@ const spaceData: Spaces = {
   oficina: {
     id: "oficina",
     name: "Oficina",
-    icon: <Monitor size={24} />,
+    icon: <Monitor size={22} />,
     devices: [
       { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
       { icon: <Speaker size={14} />, name: "Altavoz" },
@@ -117,7 +138,7 @@ const spaceData: Spaces = {
   garaje: {
     id: "garaje",
     name: "Garaje",
-    icon: <Car size={24} />,
+    icon: <Car size={22} />,
     devices: [
       { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
       { icon: <DoorOpen size={14} />, name: "Puerta" },
@@ -127,7 +148,7 @@ const spaceData: Spaces = {
   jardin: {
     id: "jardin",
     name: "Jardín",
-    icon: <TreePine size={24} />,
+    icon: <TreePine size={22} />,
     devices: [
       { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
       { icon: <Droplet size={14} />, name: "Riego" },
@@ -137,7 +158,7 @@ const spaceData: Spaces = {
   terraza: {
     id: "terraza",
     name: "Terraza",
-    icon: <Sun size={24} />,
+    icon: <Sun size={22} />,
     devices: [
       { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
       { icon: <Speaker size={14} />, name: "Altavoz" },
@@ -146,275 +167,808 @@ const spaceData: Spaces = {
   },
 };
 
-interface CreateSceneDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSave: (scene: { name: string; color: string; description: string; devices: DeviceAttribute[] }) => void;
-}
+const sceneOptions = [
+  {
+    value: "relajacion",
+    label: "Relajación",
+    description: "Luces suaves y clima tranquilo.",
+    icon: <Moon size={20} />,
+  },
+  {
+    value: "lectura",
+    label: "Lectura",
+    description: "Luz enfocada y ambiente silencioso.",
+    icon: <BookOpen size={20} />,
+  },
+  {
+    value: "musica",
+    label: "Música",
+    description: "Altavoces listos y clima social.",
+    icon: <Music size={20} />,
+  },
+  {
+    value: "pelicula",
+    label: "Película",
+    description: "Baja la luz y prioriza confort.",
+    icon: <Film size={20} />,
+  },
+  {
+    value: "trabajo",
+    label: "Trabajo",
+    description: "Iluminación clara y foco activo.",
+    icon: <Zap size={20} />,
+  },
+  {
+    value: "romantica",
+    label: "Romántica",
+    description: "Tonos cálidos y ambiente íntimo.",
+    icon: <Heart size={20} />,
+  },
+  {
+    value: "atardecer",
+    label: "Atardecer",
+    description: "Transición cálida para cerrar el día.",
+    icon: <Sunset size={20} />,
+  },
+  {
+    value: "cine",
+    label: "Cine",
+    description: "TV protagonista y luces al mínimo.",
+    icon: <Tv size={20} />,
+  },
+];
 
-export function CreateSceneDialog({ open, onOpenChange, onSave }: CreateSceneDialogProps) {
+const steps = [
+  { id: "details", label: "Detalles", description: "Nombre y descripción" },
+  { id: "style", label: "Estilo", description: "Tipo de escena" },
+  { id: "devices", label: "Dispositivos", description: "Configuración por ambiente" },
+  { id: "review", label: "Resumen", description: "Chequeo final" },
+];
+
+export function CreateSceneDialog({
+  open,
+  onOpenChange,
+  onSave,
+  initialScene = null,
+}: CreateSceneDialogProps) {
+  const isEditing = Boolean(initialScene);
+  const [sceneId, setSceneId] = useState<string | undefined>(undefined);
   const [sceneName, setSceneName] = useState("");
   const [sceneDescription, setSceneDescription] = useState("");
   const [sceneType, setSceneType] = useState("relajacion");
   const [deviceAttributes, setDeviceAttributes] = useState<DeviceAttribute[]>([]);
   const [activeTab, setActiveTab] = useState<string>("sala");
+  const [currentStep, setCurrentStep] = useState(0);
+  const [showNameError, setShowNameError] = useState(false);
 
-  const sceneOptions = [
-    { value: "relajacion", label: "Relajación", icon: <Moon size={20} /> },
-    { value: "lectura", label: "Lectura", icon: <BookOpen size={20} /> },
-    { value: "musica", label: "Música", icon: <Music size={20} /> },
-    { value: "pelicula", label: "Película", icon: <Film size={20} /> },
-    { value: "trabajo", label: "Trabajo", icon: <Zap size={20} /> },
-    { value: "romantica", label: "Romántica", icon: <Heart size={20} /> },
-    { value: "atardecer", label: "Atardecer", icon: <Sunset size={20} /> },
-    { value: "cine", label: "Cine", icon: <Tv size={20} /> },
-  ];
+  const selectedSceneType =
+    sceneOptions.find((scene) => scene.value === sceneType) ?? sceneOptions[0];
 
-  const handleDeviceStatusChange = (spaceId: string, deviceIndex: number, status: "on" | "off") => {
+  const activeDevices = useMemo(
+    () => deviceAttributes.filter((attribute) => attribute.status === "on"),
+    [deviceAttributes],
+  );
+
+  const configuredSpaces = useMemo(
+    () =>
+      Object.values(spaceData)
+        .map((space) => {
+          const devices = activeDevices
+            .filter((attribute) => attribute.spaceId === space.id)
+            .map((attribute) => ({
+              ...attribute,
+              deviceName:
+                space.devices[attribute.deviceIndex]?.name ||
+                `Dispositivo ${attribute.deviceIndex + 1}`,
+            }));
+
+          return {
+            id: space.id,
+            name: space.name,
+            icon: space.icon,
+            devices,
+          };
+        })
+        .filter((space) => space.devices.length > 0),
+    [activeDevices],
+  );
+
+  const resetForm = () => {
+    setSceneId(undefined);
+    setSceneName("");
+    setSceneDescription("");
+    setSceneType("relajacion");
+    setDeviceAttributes([]);
+    setActiveTab("sala");
+    setCurrentStep(0);
+    setShowNameError(false);
+  };
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    if (initialScene) {
+      setSceneId(initialScene.id);
+      setSceneName(initialScene.name);
+      setSceneDescription(initialScene.description);
+      setSceneType(initialScene.color);
+      setDeviceAttributes(
+        initialScene.devices.map((device) => ({
+          ...device,
+          id: `${device.spaceId}-${device.deviceIndex}`,
+        })),
+      );
+      setActiveTab(initialScene.devices[0]?.spaceId || "sala");
+      setCurrentStep(0);
+      setShowNameError(false);
+      return;
+    }
+
+    resetForm();
+  }, [initialScene, open]);
+
+  const handleDialogChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      resetForm();
+    }
+    onOpenChange(nextOpen);
+  };
+
+  const handleDeviceStatusChange = (
+    spaceId: string,
+    deviceIndex: number,
+    status: "on" | "off",
+  ) => {
     const id = `${spaceId}-${deviceIndex}`;
-    setDeviceAttributes((prev: DeviceAttribute[]) => {
-      const existing = prev.find((attr: DeviceAttribute) => attr.id === id);
-      if (existing) {
-        return prev.map((attr: DeviceAttribute) =>
-          attr.id === id ? { ...attr, status } : attr
+    setDeviceAttributes((previousAttributes) => {
+      const existingAttribute = previousAttributes.find(
+        (attribute) => attribute.id === id,
+      );
+
+      if (existingAttribute) {
+        return previousAttributes.map((attribute) =>
+          attribute.id === id ? { ...attribute, status } : attribute,
         );
       }
+
       return [
-        ...prev,
+        ...previousAttributes,
         { id, spaceId, deviceIndex, status, brightness: 100 },
       ];
     });
   };
 
-  const handleBrightnessChange = (spaceId: string, deviceIndex: number, brightness: number) => {
+  const handleBrightnessChange = (
+    spaceId: string,
+    deviceIndex: number,
+    brightness: number,
+  ) => {
     const id = `${spaceId}-${deviceIndex}`;
-    setDeviceAttributes((prev: DeviceAttribute[]) => {
-      const existing = prev.find((attr: DeviceAttribute) => attr.id === id);
-      if (existing) {
-        return prev.map((attr: DeviceAttribute) =>
-          attr.id === id ? { ...attr, brightness } : attr
+    setDeviceAttributes((previousAttributes) => {
+      const existingAttribute = previousAttributes.find(
+        (attribute) => attribute.id === id,
+      );
+
+      if (existingAttribute) {
+        return previousAttributes.map((attribute) =>
+          attribute.id === id ? { ...attribute, brightness } : attribute,
         );
       }
+
       return [
-        ...prev,
+        ...previousAttributes,
         { id, spaceId, deviceIndex, status: "on", brightness },
       ];
     });
   };
 
-  const getDeviceAttribute = (spaceId: string, deviceIndex: number) => {
-    return deviceAttributes.find(
-      (attr: DeviceAttribute) => attr.spaceId === spaceId && attr.deviceIndex === deviceIndex
+  const getDeviceAttribute = (spaceId: string, deviceIndex: number) =>
+    deviceAttributes.find(
+      (attribute) =>
+        attribute.spaceId === spaceId && attribute.deviceIndex === deviceIndex,
     );
+
+  const validateDetailsStep = () => {
+    const isValid = sceneName.trim().length > 0;
+    setShowNameError(!isValid);
+    return isValid;
+  };
+
+  const handleNextStep = () => {
+    if (currentStep === 0 && !validateDetailsStep()) {
+      return;
+    }
+
+    setCurrentStep((step) => Math.min(step + 1, steps.length - 1));
+  };
+
+  const handlePreviousStep = () => {
+    setCurrentStep((step) => Math.max(step - 1, 0));
   };
 
   const handleSave = () => {
-    if (!sceneName.trim()) {
-      alert("Por favor ingresa un nombre para la escena");
+    if (!validateDetailsStep()) {
+      setCurrentStep(0);
       return;
     }
 
     onSave({
-      name: sceneName,
-      description: sceneDescription,
+      id: sceneId,
+      name: sceneName.trim(),
+      description: sceneDescription.trim(),
       color: sceneType,
       devices: deviceAttributes,
     });
 
-    // Reset form
-    setSceneName("");
-    setSceneDescription("");
-    setSceneType("relajacion");
-    setDeviceAttributes([]);
-    onOpenChange(false);
+    handleDialogChange(false);
+  };
+
+  const renderDetailsStep = () => (
+    <section className="rounded-[28px] border border-[#252e3f] bg-[#121722] p-5 sm:p-6">
+      <div className="mb-6 flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7f8aa3]">
+              Paso 1
+            </p>
+            <h3 className="mt-2 text-[28px] font-semibold text-white">
+              Datos básicos
+            </h3>
+          </div>
+          <div className="inline-flex w-fit items-center rounded-full border border-[#2b3548] bg-[#10151f] px-3 py-2 text-sm text-[#d0d6e3]">
+            El nombre es obligatorio
+          </div>
+        </div>
+        <p className="text-[15px] leading-6 text-[#a5aec2]">
+          Arrancá con lo mínimo y seguí. Sin paneles angostos ni ruido extra.
+        </p>
+      </div>
+
+      <div className="space-y-5">
+        <div>
+          <Label
+            htmlFor="scene-name"
+            className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#98a2b7]"
+          >
+            Nombre de la escena
+          </Label>
+          <Input
+            id="scene-name"
+            placeholder="Ej: Noche de lectura"
+            value={sceneName}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+              setSceneName(event.target.value);
+              if (showNameError && event.target.value.trim()) {
+                setShowNameError(false);
+              }
+            }}
+            className={`mt-3 h-14 rounded-[20px] border bg-[#0d1118] px-4 text-[16px] text-white placeholder:text-[#667089] ${
+              showNameError
+                ? "border-[#f46d6d] focus-visible:ring-[#f46d6d]/40"
+                : "border-[#283245] focus-visible:ring-[#f0c45c]/30"
+            }`}
+          />
+          {showNameError ? (
+            <p className="mt-2 text-sm text-[#f29a9a]">
+              Falta el nombre de la escena.
+            </p>
+          ) : null}
+        </div>
+
+        <div>
+          <Label
+            htmlFor="scene-description"
+            className="text-[12px] font-semibold uppercase tracking-[0.2em] text-[#98a2b7]"
+          >
+            Descripción breve
+          </Label>
+          <Textarea
+            id="scene-description"
+            placeholder="Ej: Luces bajas y música suave"
+            value={sceneDescription}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+              setSceneDescription(event.target.value)
+            }
+            className="mt-3 min-h-[116px] rounded-[20px] border border-[#283245] bg-[#0d1118] px-4 py-3 text-[16px] text-white placeholder:text-[#667089] focus-visible:ring-[#f0c45c]/30"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-3 lg:grid-cols-2">
+        <div className="rounded-[22px] border border-[#2b3548] bg-[linear-gradient(180deg,rgba(233,188,87,0.18),rgba(18,23,34,0.02))] p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d6a339]/60 bg-[#10151f] text-[#f0c45c]">
+              {selectedSceneType.icon}
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
+                Vista previa
+              </p>
+              <p className="mt-1 text-[18px] font-medium text-white">
+                {sceneName.trim() || "Tu nueva escena"}
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 text-sm leading-6 text-[#a5aec2]">
+            {sceneDescription.trim() || "Todavía no agregaste una descripción."}
+          </p>
+        </div>
+
+        <div className="rounded-[22px] border border-[#252e3f] bg-[#10151f] p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
+            Estilo actual
+          </p>
+          <p className="mt-3 text-[18px] font-medium text-white">
+            {selectedSceneType.label}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[#98a2b7]">
+            Lo cambiás en el paso siguiente.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+
+  const renderStyleStep = () => (
+    <section className="rounded-[28px] border border-[#252e3f] bg-[#121722] p-5 sm:p-6">
+      <div className="mb-6 flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7f8aa3]">
+              Paso 2
+            </p>
+            <h3 className="mt-2 text-[28px] font-semibold text-white">
+              Elegí el estilo
+            </h3>
+          </div>
+          <div className="inline-flex items-center rounded-full border border-[#2b3548] bg-[#10151f] px-3 py-2 text-sm text-[#d0d6e3]">
+            Seleccionado: {selectedSceneType.label}
+          </div>
+        </div>
+        <p className="text-[15px] leading-6 text-[#a5aec2]">
+          Todas las opciones visibles, sin panel lateral achicando el contenido.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {sceneOptions.map((scene) => {
+          const isSelected = scene.value === sceneType;
+
+          return (
+            <button
+              key={scene.value}
+              type="button"
+              onClick={() => setSceneType(scene.value)}
+              className={`flex min-h-[118px] items-start gap-4 rounded-[22px] border px-4 py-4 text-left transition-all ${
+                isSelected
+                  ? "border-[#d6a339] bg-[linear-gradient(180deg,rgba(214,163,57,0.18),rgba(18,23,34,0.92))] text-white shadow-[0_16px_40px_rgba(214,163,57,0.08)]"
+                  : "border-[#253042] bg-[#10151f] text-[#a5aec2] hover:border-[#3a4a66] hover:bg-[#131a27]"
+              }`}
+            >
+              <div
+                className={`mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${
+                  isSelected
+                    ? "border-[#e0b14e]/60 bg-[#141a24] text-[#f0c45c]"
+                    : "border-[#2a3346] bg-[#161d2a] text-[#8c96ab]"
+                }`}
+              >
+                {scene.icon}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[17px] font-semibold">{scene.label}</p>
+                <p
+                  className={`mt-2 text-[14px] leading-6 ${
+                    isSelected ? "text-[#ece6d4]" : "text-[#92a0b6]"
+                  }`}
+                >
+                  {scene.description}
+                </p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+
+  const renderDevicesStep = () => (
+    <section className="rounded-[28px] border border-[#252e3f] bg-[#121722] p-5 sm:p-6">
+      <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7f8aa3]">
+            Paso 3
+          </p>
+          <h3 className="mt-2 text-[26px] font-semibold text-white">
+            Configurá dispositivos
+          </h3>
+          <p className="mt-2 max-w-[48ch] text-[15px] leading-6 text-[#a5aec2]">
+            Entrá ambiente por ambiente. Solo se muestran los controles del
+            espacio activo para evitar un modal eterno.
+          </p>
+        </div>
+        <div className="inline-flex items-center rounded-full border border-[#2b3548] bg-[#10151f] px-4 py-2 text-sm text-[#d0d6e3]">
+          {activeDevices.length} dispositivo
+          {activeDevices.length === 1 ? "" : "s"} activo
+          {activeDevices.length === 1 ? "" : "s"}
+        </div>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+        <div className="rounded-[24px] border border-[#252e3f] bg-[#10151f] p-3">
+          <p className="px-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
+            Ambientes
+          </p>
+          <TabsList className="mt-3 grid h-auto grid-cols-2 gap-2 bg-transparent p-0">
+            {Object.values(spaceData).map((space) => {
+              const spaceActiveDevices = activeDevices.filter(
+                (attribute) => attribute.spaceId === space.id,
+              ).length;
+
+              return (
+                <TabsTrigger
+                  key={space.id}
+                  value={space.id}
+                  className="min-h-[88px] rounded-[20px] border border-[#253042] bg-[#121823] px-3 py-4 text-left text-[#9aa4b8] data-[state=active]:border-[#d6a339] data-[state=active]:bg-[#171f2d] data-[state=active]:text-white"
+                >
+                  <div className="flex items-start gap-3 text-left">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-[#2c3648] bg-[#171d2a]">
+                      {space.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[15px] font-medium leading-5 whitespace-normal">
+                        {space.name}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-[#7f8aa3]">
+                        {spaceActiveDevices} activo
+                        {spaceActiveDevices === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  </div>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </div>
+
+        {Object.values(spaceData).map((space) => (
+          <TabsContent
+            key={space.id}
+            value={space.id}
+            className="mt-0 rounded-[24px] border border-[#252e3f] bg-[#10151f] p-4 sm:p-5"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h4 className="text-[22px] font-semibold text-white">
+                  {space.name}
+                </h4>
+                <p className="mt-1 text-sm text-[#98a2b7]">
+                  Encendé solo los dispositivos que formen parte de esta escena.
+                </p>
+              </div>
+            </div>
+
+            <div className="max-h-[400px] space-y-3 overflow-y-auto pr-1">
+              {space.devices.map((device, index) => {
+                const attribute = getDeviceAttribute(space.id, index);
+                const isActive = attribute?.status === "on";
+
+                return (
+                  <div
+                    key={`${space.id}-${index}`}
+                    className={`rounded-[22px] border p-4 transition-colors ${
+                      isActive
+                        ? "border-[#d6a339]/70 bg-[#151d2a]"
+                        : "border-[#252e3f] bg-[#131925]"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-2xl border ${
+                            isActive
+                              ? "border-[#d6a339]/60 bg-[#10151f] text-[#f0c45c]"
+                              : "border-[#2b3548] bg-[#1a2230] text-[#8c96ab]"
+                          }`}
+                        >
+                          {device.icon}
+                        </div>
+                        <div>
+                          <h5 className="text-[16px] font-medium text-white">
+                            {device.name || `Dispositivo ${index + 1}`}
+                          </h5>
+                          <p className="mt-1 text-sm text-[#98a2b7]">
+                            {isActive
+                              ? `Encendido${attribute?.brightness !== undefined ? ` · ${attribute.brightness}%` : ""}`
+                              : "Apagado"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleDeviceStatusChange(
+                            space.id,
+                            index,
+                            isActive ? "off" : "on",
+                          )
+                        }
+                        className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full p-[2px] transition-colors ${
+                          isActive ? "bg-[#d6a339]" : "bg-[#4c566a]"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-7 w-7 rounded-full bg-white transition-transform ${
+                            isActive ? "translate-x-6" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {isActive ? (
+                      <div className="mt-4">
+                        <div className="mb-2 flex items-center justify-between text-sm text-[#aeb6c8]">
+                          <span>Intensidad</span>
+                          <span>{attribute?.brightness ?? 0}%</span>
+                        </div>
+                        <div className="relative h-[6px] rounded-full bg-[#273246]">
+                          <div
+                            className="absolute left-0 top-0 h-full rounded-full bg-[#f0c45c]"
+                            style={{ width: `${attribute?.brightness ?? 0}%` }}
+                          />
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            value={attribute?.brightness ?? 0}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                              handleBrightnessChange(
+                                space.id,
+                                index,
+                                parseInt(event.target.value, 10),
+                              )
+                            }
+                            className="absolute inset-0 h-[6px] w-full cursor-pointer opacity-0"
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </TabsContent>
+        ))}
+      </Tabs>
+    </section>
+  );
+
+  const renderReviewStep = () => (
+    <section className="rounded-[28px] border border-[#252e3f] bg-[#121722] p-5 sm:p-6">
+      <div className="mb-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-[#7f8aa3]">
+          Paso 4
+        </p>
+        <h3 className="mt-2 text-[28px] font-semibold text-white">
+          Revisá antes de guardar
+        </h3>
+        <p className="mt-2 text-[15px] leading-6 text-[#a5aec2]">
+          Todo el resumen en ancho completo, sin panel lateral comiéndose el espacio.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="rounded-[22px] border border-[#252e3f] bg-[#10151f] p-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#d6a339]/60 bg-[#151b27] text-[#f0c45c]">
+              {selectedSceneType.icon}
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
+                Escena
+              </p>
+              <h4 className="mt-1 text-[24px] font-semibold text-white">
+                {sceneName.trim() || "Sin nombre"}
+              </h4>
+            </div>
+          </div>
+          <p className="mt-3 text-[15px] leading-6 text-[#a5aec2]">
+            {sceneDescription.trim() || "Sin descripción adicional."}
+          </p>
+        </div>
+
+        <div className="rounded-[22px] border border-[#252e3f] bg-[#10151f] p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
+            Configuración activa
+          </p>
+          <div className="mt-3 flex flex-wrap gap-3">
+            <div className="rounded-full border border-[#2b3548] bg-[#151b27] px-4 py-2 text-sm text-[#d0d6e3]">
+              Tipo: {selectedSceneType.label}
+            </div>
+            <div className="rounded-full border border-[#2b3548] bg-[#151b27] px-4 py-2 text-sm text-[#d0d6e3]">
+              {activeDevices.length} dispositivo
+              {activeDevices.length === 1 ? "" : "s"} activo
+              {activeDevices.length === 1 ? "" : "s"}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[22px] border border-[#252e3f] bg-[#10151f] p-4">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
+            Ambientes incluidos
+          </p>
+
+          {configuredSpaces.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              {configuredSpaces.map((space) => (
+                <div
+                  key={space.id}
+                  className="rounded-[18px] border border-[#232c3d] bg-[#141a26] p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[#2c3648] bg-[#171d2a] text-[#f0c45c]">
+                      {space.icon}
+                    </div>
+                    <div>
+                      <p className="font-medium text-white">{space.name}</p>
+                      <p className="text-sm text-[#98a2b7]">
+                        {space.devices.length} dispositivo
+                        {space.devices.length === 1 ? "" : "s"} activo
+                        {space.devices.length === 1 ? "" : "s"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {space.devices.map((device) => (
+                      <span
+                        key={device.id}
+                        className="rounded-full border border-[#2b3548] bg-[#10151f] px-3 py-1.5 text-sm text-[#d0d6e3]"
+                      >
+                        {device.deviceName}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-4 text-sm leading-6 text-[#98a2b7]">
+              No activaste dispositivos. Podés guardar igual si querés dejar la
+              escena lista para completar después.
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+
+  const renderStepContent = () => {
+    if (currentStep === 0) {
+      return renderDetailsStep();
+    }
+
+    if (currentStep === 1) {
+      return renderStyleStep();
+    }
+
+    if (currentStep === 2) {
+      return renderDevicesStep();
+    }
+
+    return renderReviewStep();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-[#0f1115] border border-[#20232d] [&_button]:text-[#6b7280]">
-        <DialogHeader>
-          <DialogTitle className="text-2xl text-white">Crear Nueva Escena</DialogTitle>
-          <DialogDescription className="text-[#8a8d9e]">
-            Configura los dispositivos para tu nueva escena personalizada
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
+      <DialogContent className="w-[min(98vw,1240px)] overflow-hidden border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] sm:max-h-[90vh] sm:rounded-[32px] [&>button]:text-[#8b96ab]">
+        <div className="flex max-h-[90vh] flex-col overflow-hidden">
+          <div className="relative border-b border-[#20283a] px-5 pb-3 pt-4 sm:px-7">
+            <div className="absolute inset-x-0 top-0 h-20 bg-[radial-gradient(circle_at_top,rgba(240,196,92,0.38),rgba(240,196,92,0.1)_35%,transparent_70%)]" />
+            <div className="relative">
+              <DialogTitle className="text-[24px] font-semibold text-white">
+                {isEditing ? "Editar escena" : "Crear escena"}
+              </DialogTitle>
 
-        <div className="space-y-6">
-          {/* Escena Details */}
-          <div className="space-y-4 bg-[#15171e] rounded-2xl p-5 border border-[#20232d]">
-            <div>
-              <Label htmlFor="scene-name" className="text-white text-[11px] font-bold tracking-wider uppercase">Nombre de la Escena</Label>
-              <Input
-                id="scene-name"
-                placeholder="Ej: Lectura Relajante"
-                value={sceneName}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSceneName(e.target.value)}
-                className="mt-3 bg-[#0f1115] border border-[#26293a] text-white placeholder:text-[#6b7280] rounded-2xl"
-              />
+              <ol className="mt-4 grid grid-cols-4 gap-2">
+                {steps.map((step, index) => {
+                  const isCurrentStep = index === currentStep;
+                  const isCompletedStep = index < currentStep;
+
+                  return (
+                    <li key={step.id} className="relative">
+                      {index < steps.length - 1 ? (
+                        <span
+                          className={`absolute left-1/2 right-[-50%] top-5 h-[2px] ${
+                            isCompletedStep ? "bg-[#d6a339]" : "bg-[#2a3346]"
+                          }`}
+                        />
+                      ) : null}
+                      <div className="relative z-10 flex flex-col items-center gap-2 text-center">
+                        <div
+                          className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold transition-colors ${
+                            isCompletedStep
+                              ? "border-[#d6a339] bg-[#d6a339] text-[#10151f]"
+                              : isCurrentStep
+                                ? "border-[#d6a339] bg-[#151d2a] text-[#f0c45c]"
+                                : "border-[#2b3548] bg-[#10151f] text-[#7f8aa3]"
+                          }`}
+                        >
+                          {isCompletedStep ? <Check size={16} /> : index + 1}
+                        </div>
+                        <div>
+                          <p
+                            className={`text-[13px] font-medium ${
+                              isCurrentStep || isCompletedStep
+                                ? "text-white"
+                                : "text-[#8b96ab]"
+                            }`}
+                          >
+                            {step.label}
+                          </p>
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
             </div>
+          </div>
 
-            <div>
-              <Label htmlFor="scene-description" className="text-white text-[11px] font-bold tracking-wider uppercase">Descripción</Label>
-              <Input
-                id="scene-description"
-                placeholder="Ej: Luces bajas, música suave"
-                value={sceneDescription}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSceneDescription(e.target.value)}
-                className="mt-3 bg-[#0f1115] border border-[#26293a] text-white placeholder:text-[#6b7280] rounded-2xl"
-              />
-            </div>
+          <div className="flex-1 overflow-y-auto px-5 py-3 sm:px-7 sm:py-4">
+            {renderStepContent()}
+          </div>
 
-            <div>
-              <Label className="text-white text-[11px] font-bold tracking-wider uppercase mb-3 block">Tipo de Escena</Label>
-              <div className="grid grid-cols-4 gap-2">
-                {sceneOptions.map((scene) => (
-                  <button
-                    key={scene.value}
-                    onClick={() => setSceneType(scene.value)}
-                    className={`h-[56px] rounded-2xl flex flex-col items-center justify-center gap-1 border-2 transition-all ${
-                      sceneType === scene.value
-                        ? "border-[#fbbf24] bg-[#000000] text-[#fbbf24]"
-                        : "border-[#2a2d3a] bg-[#15171e] text-[#6b7280] hover:border-[#335bd1]"
-                    }`}
-                    title={scene.label}
+          <div className="border-t border-[#20283a] bg-[#0b0f16] px-5 py-4 sm:px-7">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-[#8b96ab]">
+                {currentStep === 0
+                  ? "Completá el nombre y seguí."
+                  : currentStep === 1
+                    ? "Elegí el estilo de la escena."
+                    : currentStep === 2
+                      ? "Activá solo los dispositivos necesarios."
+                      : "Revisá y guardá."}
+              </p>
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={currentStep === 0 ? () => handleDialogChange(false) : handlePreviousStep}
+                  className="h-11 rounded-[18px] border border-[#2b3548] bg-[#141a26] px-5 text-[#d0d6e3] hover:bg-[#192131] hover:text-white"
+                >
+                  {currentStep === 0 ? (
+                    "Cancelar"
+                  ) : (
+                    <>
+                      <ChevronLeft size={16} />
+                      Atrás
+                    </>
+                  )}
+                </Button>
+
+                {currentStep === steps.length - 1 ? (
+                  <Button
+                    type="button"
+                    onClick={handleSave}
+                    className="h-11 rounded-[18px] border border-[#d6a339] bg-[#151d2a] px-5 text-[#f0c45c] hover:bg-[#1b2434]"
                   >
-                    <div className="text-lg">{scene.icon}</div>
-                    <span className="text-[10px] font-medium text-center">{scene.label}</span>
-                  </button>
-                ))}
+                    {isEditing ? "Guardar cambios" : "Guardar escena"}
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleNextStep}
+                    className="h-11 rounded-[18px] border border-[#d6a339] bg-[#151d2a] px-5 text-[#f0c45c] hover:bg-[#1b2434]"
+                  >
+                    Continuar
+                    <ChevronRight size={16} />
+                  </Button>
+                )}
               </div>
             </div>
-          </div>
-
-          {/* Spaces and Devices */}
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-[#8a8d9e] text-[12px] font-bold tracking-widest uppercase mb-4">Configura tus Dispositivos</h3>
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-4 gap-2 h-auto bg-transparent border-0 p-0 mb-6 w-full">
-                  {Object.values(spaceData).map((space) => (
-                    <TabsTrigger
-                      key={space.id}
-                      value={space.id}
-                      className="flex flex-col items-center gap-2 py-3 rounded-[14px] data-[state=active]:bg-[#20232d] data-[state=active]:text-[#fbbf24] text-[#6b7280] bg-transparent border border-transparent hover:border-[#2a2d3a] flex-1"
-                    >
-                      <div className="text-lg">{space.icon}</div>
-                      <span className="text-xs text-center">{space.name}</span>
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-
-                {Object.values(spaceData).map((space) => (
-                  <TabsContent key={space.id} value={space.id} className="space-y-4 mt-4">
-                    <h2 className="text-[#8a8d9e] text-[12px] font-bold tracking-widest uppercase mb-4">
-                      {space.name}
-                    </h2>
-                    <div className="space-y-3">
-                        {space.devices.map((device, index) => {
-                          const attribute = getDeviceAttribute(space.id, index);
-                          const isActive = attribute !== undefined && attribute.status === "on";
-
-                          return (
-                            <div
-                              key={index}
-                              className={`rounded-[18px] p-4 flex flex-col gap-4 transition-colors ${
-                                isActive
-                                  ? "bg-[#15171e] border border-[#2a3250] shadow-[0_0_20px_rgba(65,113,255,0.06)]"
-                                  : "bg-[#15171e] border border-[#20232d]"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                  <div
-                                    className={`w-[46px] h-[46px] rounded-[14px] flex items-center justify-center ${
-                                      isActive
-                                        ? "bg-[#000000] text-[#fbbf24]"
-                                        : "bg-[#20232d] text-[#6b7280]"
-                                    }`}
-                                  >
-                                    {device.icon}
-                                  </div>
-                                  <div>
-                                    <h4 className="text-[15px] font-medium text-white mb-0.5">
-                                      {device.name || `Dispositivo ${index + 1}`}
-                                    </h4>
-                                    <p
-                                      className={`text-[13px] ${
-                                        isActive ? "text-[#fbbf24]" : "text-[#6b7280]"
-                                      }`}
-                                    >
-                                      {isActive ? "Encendido" : "Apagado"}
-                                      {isActive && attribute?.brightness !== undefined && ` · ${attribute.brightness}%`}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleDeviceStatusChange(
-                                      space.id,
-                                      index,
-                                      isActive ? "off" : "on"
-                                    )
-                                  }
-                                  className={`relative inline-flex h-[32px] w-[56px] items-center rounded-full p-[2px] transition-colors duration-200 ${
-                                    isActive ? "bg-[#fbbf24]" : "bg-[#454955]"
-                                  }`}
-                                >
-                                  <span
-                                    className={`inline-block h-[28px] w-[28px] transform rounded-full bg-white transition-transform duration-200 ${
-                                      isActive ? "translate-x-[24px]" : "translate-x-0"
-                                    }`}
-                                  />
-                                </button>
-                              </div>
-
-                              {isActive && (
-                                <div className="px-1 pb-1 pt-1 relative">
-                                  <div className="relative w-full h-[6px] bg-[#2a2d3d] rounded-full">
-                                    <div
-                                      className="absolute left-0 top-0 h-full bg-[#fbbf24] rounded-full transition-all duration-150"
-                                      style={{ width: `${attribute?.brightness || 0}%` }}
-                                    />
-                                    <input
-                                      type="range"
-                                      min="0"
-                                      max="100"
-                                      value={attribute?.brightness || 0}
-                                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                        handleBrightnessChange(space.id, index, parseInt(event.target.value))
-                                      }
-                                      className="absolute inset-0 w-full h-[6px] opacity-0 cursor-pointer"
-                                    />
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </TabsContent>
-                ))}
-              </Tabs>
-            </div>
-          </div>
-
-          {/* Save Button */}
-          <div className="flex justify-end gap-3 border-t border-[#20232d] pt-6">
-            <Button
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              className="bg-[#15171e] border border-[#20232d] text-[#6b7280] hover:bg-[#1a1d28] hover:text-[#9ca3af]"
-            >
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleSave}
-              className="bg-[#000000] border border-[#fbbf24] text-[#fbbf24] hover:bg-[#1a1a1a] !text-[#fbbf24]"
-            >
-              Guardar Escena
-            </Button>
           </div>
         </div>
       </DialogContent>

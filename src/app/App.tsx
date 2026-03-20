@@ -1,6 +1,14 @@
-import { RouterProvider } from 'react-router';
-import { router } from './routes';
+import { RouterProvider } from "react-router";
+import { AccountProvider } from "./context/account-context";
+import { HomeProvider } from "./context/home-context";
+import { router } from "./routes";
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <AccountProvider>
+      <HomeProvider>
+        <RouterProvider router={router} />
+      </HomeProvider>
+    </AccountProvider>
+  );
 }

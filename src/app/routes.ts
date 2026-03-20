@@ -11,6 +11,7 @@ export const router = createBrowserRouter([
     Component: Root,
     children: [
       { index: true, Component: Espacios },
+      { path: "espacio/:homeId/:spaceId", Component: SpaceDetail },
       { path: "espacio/:spaceId", Component: SpaceDetail },
       { path: "ajustes", Component: Ajustes },
       { path: "escenas", Component: Escenas },
