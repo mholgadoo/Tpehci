@@ -76,11 +76,11 @@ const initialHomes: Home[] = [
         name: "Sala de Estar",
         icon: <Armchair size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <Lightbulb size={14} /> },
-          { icon: <Speaker size={14} /> },
-          { icon: <Blinds size={14} /> },
-          { icon: <Bell size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <Lightbulb size={20} /> },
+          { icon: <Speaker size={20} /> },
+          { icon: <Blinds size={20} /> },
+          { icon: <Bell size={20} /> },
         ],
       },
       {
@@ -88,10 +88,10 @@ const initialHomes: Home[] = [
         name: "Dormitorio",
         icon: <Bed size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <Lightbulb size={14} /> },
-          { icon: <Blinds size={14} /> },
-          { icon: <Wind size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <Lightbulb size={20} /> },
+          { icon: <Blinds size={20} /> },
+          { icon: <Wind size={20} /> },
         ],
       },
       {
@@ -99,9 +99,9 @@ const initialHomes: Home[] = [
         name: "Cocina",
         icon: <ChefHat size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <CookingPot size={14} /> },
-          { icon: <Bell size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <CookingPot size={20} /> },
+          { icon: <Bell size={20} /> },
         ],
       },
       {
@@ -109,8 +109,8 @@ const initialHomes: Home[] = [
         name: "Baño",
         icon: <Bath size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <Wind size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <Wind size={20} /> },
         ],
       },
       {
@@ -118,9 +118,9 @@ const initialHomes: Home[] = [
         name: "Oficina",
         icon: <Monitor size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <Speaker size={14} /> },
-          { icon: <Blinds size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <Speaker size={20} /> },
+          { icon: <Blinds size={20} /> },
         ],
       },
       {
@@ -128,9 +128,9 @@ const initialHomes: Home[] = [
         name: "Garaje",
         icon: <Car size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <DoorOpen size={14} /> },
-          { icon: <Bell size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <DoorOpen size={20} /> },
+          { icon: <Bell size={20} /> },
         ],
       },
       {
@@ -138,9 +138,9 @@ const initialHomes: Home[] = [
         name: "Jardín",
         icon: <TreePine size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <Droplet size={14} /> },
-          { icon: <Bell size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <Droplet size={20} /> },
+          { icon: <Bell size={20} /> },
         ],
       },
       {
@@ -148,9 +148,9 @@ const initialHomes: Home[] = [
         name: "Terraza",
         icon: <Sun size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <Speaker size={14} /> },
-          { icon: <Blinds size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <Speaker size={20} /> },
+          { icon: <Blinds size={20} /> },
         ],
       },
     ],
@@ -165,9 +165,9 @@ const initialHomes: Home[] = [
         name: "Sala de Estar",
         icon: <Armchair size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <Speaker size={14} /> },
-          { icon: <Blinds size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <Speaker size={20} /> },
+          { icon: <Blinds size={20} /> },
         ],
       },
       {
@@ -175,8 +175,8 @@ const initialHomes: Home[] = [
         name: "Cocina",
         icon: <ChefHat size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <CookingPot size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <CookingPot size={20} /> },
         ],
       },
       {
@@ -184,8 +184,8 @@ const initialHomes: Home[] = [
         name: "Terraza",
         icon: <Sun size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <Speaker size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <Speaker size={20} /> },
         ],
       },
     ],
@@ -200,9 +200,9 @@ const initialHomes: Home[] = [
         name: "Oficina",
         icon: <Monitor size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <Speaker size={14} /> },
-          { icon: <Blinds size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <Speaker size={20} /> },
+          { icon: <Blinds size={20} /> },
         ],
       },
       {
@@ -210,8 +210,8 @@ const initialHomes: Home[] = [
         name: "Office",
         icon: <ChefHat size={28} />,
         devices: [
-          { icon: <Lightbulb size={14} />, color: "text-yellow-500" },
-          { icon: <CookingPot size={14} /> },
+          { icon: <Lightbulb size={20} />, color: "text-yellow-500" },
+          { icon: <CookingPot size={20} /> },
         ],
       },
     ],
@@ -332,7 +332,7 @@ export function Espacios() {
             className={`rounded-3xl border border-gray-700/50 bg-gradient-to-br from-gray-900/80 to-black/80 transition-all ${
               isMobile
                 ? "flex items-center justify-between p-5 hover:border-gray-600/50"
-                : "p-6 hover:scale-[1.02] hover:border-gray-600/50"
+                : "p-6 hover:scale-[1.02] hover:border-gray-600/50 min-h-[220px] flex flex-col justify-between"
             }`}
           >
             <div className={isMobile ? "flex items-center gap-4" : ""}>
@@ -345,11 +345,11 @@ export function Espacios() {
               </div>
 
               <div>
-                <h3 className="text-lg font-medium text-white">{space.name}</h3>
+                <h3 className="text-xl font-medium text-white">{space.name}</h3>
                 <div className="mt-3 flex flex-wrap gap-3">
                   {space.devices.length > 0 ? (
                     space.devices.map((device, index) => (
-                      <div key={index} className={device.color || "text-gray-500"}>
+                      <div key={index} className={`text-3xl ${device.color || "text-gray-500"}`}>
                         {device.icon}
                       </div>
                     ))

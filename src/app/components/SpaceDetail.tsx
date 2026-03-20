@@ -317,10 +317,10 @@ export function SpaceDetail() {
                 type="button"
                 onClick={handleAddDevice}
                 disabled={!newDeviceName.trim() || !selectedDeviceType}
-                className={`w-full rounded-2xl py-4 text-[15px] font-medium transition-all ${
+                className={`w-full rounded-[20px] py-4 text-[15px] font-medium border-2 transition-all ${
                   newDeviceName.trim() && selectedDeviceType
-                    ? "bg-[#2f3445] text-white hover:bg-[#384054]"
-                    : "bg-[#242837] text-[#70788c]"
+                    ? "bg-black text-yellow-500 border-yellow-500"
+                    : "bg-[#202636] text-[#6b7280] border-[#202636]"
                 }`}
               >
                 Agregar Dispositivo
@@ -334,7 +334,7 @@ export function SpaceDetail() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#0f1115] text-white pb-20 md:pb-8">
+      <div className="min-h-screen bg-[#000000] text-white pb-20 md:pb-8">
         <div className="px-6 pt-12 pb-6">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-4">
@@ -369,23 +369,19 @@ export function SpaceDetail() {
             Dispositivos
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {devices.map((device) => (
               <div
                 key={device.id}
-                className={`rounded-[18px] p-4 flex flex-col gap-4 transition-colors ${
-                  device.status === "on"
-                    ? "bg-[#15171e] border border-[#2a3250] shadow-[0_0_20px_rgba(65,113,255,0.06)]"
-                    : "bg-[#15171e] border border-[#20232d]"
-                }`}
+                className="rounded-3xl border border-gray-700/50 bg-gradient-to-br from-gray-900/80 to-black/80 p-6 flex flex-col gap-4 transition-all hover:border-gray-600/50 min-h-[76px]"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div
-                      className={`w-[46px] h-[46px] rounded-[14px] flex items-center justify-center ${
+                      className={`w-[46px] h-[46px] rounded-2xl flex items-center justify-center ${
                         device.status === "on"
-                          ? "bg-[#000000] text-[#fbbf24]"
-                          : "bg-[#20232d] text-[#6b7280]"
+                          ? "bg-black text-[#fbbf24] border-2 border-yellow-500"
+                          : "bg-gray-800 text-[#6b7280]"
                       }`}
                     >
                       {device.icon}
@@ -445,13 +441,16 @@ export function SpaceDetail() {
             ))}
 
             <button
-              className="w-full h-[76px] bg-[#15171e] rounded-[18px] border border-dashed border-[#3f4354] flex items-center gap-4 px-4 text-[#6b7280] hover:text-[#9ca3af] hover:border-[#6b7280] transition-colors"
+              type="button"
               onClick={() => setIsModalOpen(true)}
+              className="rounded-3xl border border-dashed border-gray-700/50 bg-gradient-to-br from-gray-900/60 to-black/60 text-left transition-all hover:border-gray-600/50 flex items-center gap-4 p-6 text-center min-h-[76px]"
             >
-              <div className="w-[46px] h-[46px] rounded-[14px] bg-[#20232d] flex items-center justify-center">
-                <Plus size={20} />
+              <div className="flex items-center justify-center rounded-2xl bg-black border-2 border-yellow-500 p-3 text-yellow-500">
+                <Plus size={24} />
               </div>
-              <span className="text-[15px] font-medium">Nuevo dispositivo</span>
+              <div>
+                <p className="font-medium text-[#6b7280]">Agregar dispositivo</p>
+              </div>
             </button>
           </div>
         </div>
