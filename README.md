@@ -2,30 +2,52 @@
 
 Aplicación web de gestión de hogar inteligente construida con React, Vite y Tailwind CSS.
 
-## Requisitos previos
+## Paso a paso para inicializar el proyecto
 
-- [nvm (Node Version Manager)](https://github.com/nvm-sh/nvm)
-- Node.js v20 (se instala via nvm)
+### 1. Instalar nvm (Node Version Manager)
 
-## Instalación
+**Linux / macOS:**
 
-1. Instalar la versión correcta de Node.js:
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+```
+
+Cerrar y volver a abrir la terminal para que se apliquen los cambios.
+
+**Windows:**
+
+Descargar el instalador desde [nvm-windows](https://github.com/coreybutler/nvm-windows/releases) y seguir el instalador.
+
+### 2. Instalar Node.js v20
 
 ```bash
 nvm install 20
 nvm use 20
 ```
 
-2. Instalar las dependencias:
+Verificar que se instaló correctamente:
+
+```bash
+node -v
+npm -v
+```
+
+### 3. Clonar el repositorio
+
+```bash
+git clone https://github.com/tu-usuario/Tpehci.git
+cd Tpehci
+```
+
+### 4. Instalar las dependencias
 
 ```bash
 npm install
 ```
 
-## Iniciar en modo desarrollo
+### 5. Iniciar el servidor de desarrollo
 
 ```bash
-nvm use 20
 npm run dev
 ```
 
