@@ -30,7 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-
+ 
 export function Espacios() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -45,40 +45,40 @@ export function Espacios() {
   const [spaceNameError, setSpaceNameError] = useState("");
   const [newHomeName, setNewHomeName] = useState("");
   const [newHomeLocation, setNewHomeLocation] = useState("");
-
+ 
   const resetSpaceForm = () => {
     setNewSpaceName("");
     setSelectedType(null);
     setSpaceNameError("");
   };
-
+ 
   const openSpaceModal = () => {
     resetSpaceForm();
     setIsSpaceModalOpen(true);
   };
-
+ 
   const handleSpaceModalChange = (open: boolean) => {
     setIsSpaceModalOpen(open);
-
+ 
     if (!open) {
       resetSpaceForm();
     }
   };
-
+ 
   const handleAddSpace = () => {
     const trimmedSpaceName = newSpaceName.trim();
-
+ 
     if (!trimmedSpaceName) {
       setSpaceNameError("Escribí un nombre para seguir.");
       return;
     }
-
+ 
     if (!selectedType || !currentHome) return;
     addSpace(currentHome.id, trimmedSpaceName, selectedType);
-
+ 
     handleSpaceModalChange(false);
   };
-
+ 
   const handleAddHome = () => {
     const trimmedHomeName = newHomeName.trim();
     if (!trimmedHomeName) return;
@@ -87,7 +87,7 @@ export function Espacios() {
     setNewHomeName("");
     setNewHomeLocation("");
   };
-
+ 
   if (sessionClosed) {
     return (
       <div className="px-6 py-12 text-white">
@@ -110,11 +110,17 @@ export function Espacios() {
       </div>
     );
   }
-
+ 
   const spacesContent =
     currentHome.spaces.length > 0 ? (
       <div className={isMobile ? "space-y-4" : "grid grid-cols-3 gap-6"}>
-        {currentHome.spaces.map((space) => (
+        {currentHome.spaces.map((space) => {
+          const allOff =
+            space.devices.length === 0 ||
+            space.devices.every(
+              (d) => d.status === "off" || d.brightness === 0,
+            );
+          return (
           <Link
             key={space.id}
             to={`/espacio/${currentHome.id}/${space.id}`}
@@ -129,16 +135,18 @@ export function Espacios() {
                 {space.devices.length} {space.devices.length === 1 ? "dispositivo" : "dispositivos"}
               </span>
             ) : null}
-
+ 
             <div className={isMobile ? "flex items-start gap-4" : ""}>
               <div
-                className={`flex h-16 w-16 items-center justify-center rounded-[22px] border border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49] ${
-                  isMobile ? "shrink-0" : "mb-6"
-                }`}
+                className={`flex h-16 w-16 items-center justify-center rounded-[22px] border ${
+                  allOff
+                    ? "border-[#2b3448] bg-[#151b28] text-[#717a8f]"
+                    : "border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]"
+                } ${isMobile ? "shrink-0" : "mb-6"}`}
               >
                 {getSpaceIcon(space.kind, 28)}
               </div>
-
+ 
               <div className="min-w-0 flex-1">
                 <div className={isMobile ? "flex items-start justify-between gap-3" : "min-h-[106px]"}>
                   <div className="min-w-0">
@@ -157,14 +165,14 @@ export function Espacios() {
                     </span>
                   ) : null}
                 </div>
-
+ 
                 <div className="mt-5 flex flex-wrap gap-3">
                   {space.devices.length > 0 ? (
                     space.devices.map((device, index) => (
                       <div
                         key={index}
                         className={`flex h-11 w-11 items-center justify-center rounded-[16px] border border-[#252d3f] bg-[#161c28] text-xl ${
-                          device.status === "on" ? "text-[#f4bd49]" : "text-[#717a8f]"
+                          device.status === "on" && device.brightness !== 0 ? "text-[#f4bd49]" : "text-[#717a8f]"
                         }`}
                       >
                         {getDeviceIcon(device.kind, 20)}
@@ -177,8 +185,9 @@ export function Espacios() {
               </div>
             </div>
           </Link>
-        ))}
-
+          );
+        })}
+ 
         {!isMobile && (
           <button
             type="button"
@@ -213,11 +222,10 @@ export function Espacios() {
         </button>
       </div>
     );
-
+ 
   return (
     <>
       <div className="relative">
-        <div className="absolute inset-x-0 top-0 h-52 bg-[radial-gradient(circle_at_top,#f4bd49_0%,rgba(244,189,73,0.18)_26%,transparent_72%)]" />
         <div className={isMobile ? "relative px-5 pb-28 pt-7" : "relative mx-auto max-w-7xl px-12 py-10"}>
           <div className={isMobile ? "space-y-6" : "space-y-8"}>
             <div className={isMobile ? "flex items-stretch gap-3" : ""}>
@@ -241,7 +249,7 @@ export function Espacios() {
                         {currentHome.subtitle}
                       </p>
                     </div>
-
+ 
                     <div className="ml-4 rounded-[20px] border border-[#2d3649] bg-[#151b28] px-4 py-4 text-right">
                       <p className="text-[16px] font-semibold text-white">
                         {currentHome.spaces.length} espacios
@@ -249,7 +257,7 @@ export function Espacios() {
                     </div>
                   </button>
                 </DropdownMenuTrigger>
-
+ 
                 <DropdownMenuContent
                   align="start"
                   sideOffset={12}
@@ -258,7 +266,7 @@ export function Espacios() {
                   <p className="px-2 pb-3 pt-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
                     Cambiar hogar
                   </p>
-
+ 
                   <div className="space-y-2">
                     {homes.map((home) => (
                       <button
@@ -281,7 +289,7 @@ export function Espacios() {
                       </button>
                     ))}
                   </div>
-
+ 
                   <button
                     type="button"
                     onClick={() => setIsHomeModalOpen(true)}
@@ -292,7 +300,7 @@ export function Espacios() {
                   </button>
                 </DropdownMenuContent>
               </DropdownMenu>
-
+ 
               {isMobile ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -312,7 +320,7 @@ export function Espacios() {
                       </div>
                     </button>
                   </DropdownMenuTrigger>
-
+ 
                   <DropdownMenuContent
                     align="end"
                     sideOffset={12}
@@ -322,9 +330,9 @@ export function Espacios() {
                       <p className="text-[15px] font-medium text-white">{selectedAccount.name}</p>
                       <p className="text-xs text-[#8f97ab]">{selectedAccount.email}</p>
                     </div>
-
+ 
                     <DropdownMenuSeparator className="mx-1 my-2 bg-[#232a3a]" />
-
+ 
                     <DropdownMenuItem className="rounded-[16px] px-3 py-3 text-[#d5dbea] focus:bg-[#1b2232] focus:text-white">
                       <User size={16} />
                       Ver perfil
@@ -336,9 +344,9 @@ export function Espacios() {
                       <Settings size={16} />
                       Preferencias
                     </DropdownMenuItem>
-
+ 
                     <DropdownMenuSeparator className="mx-1 my-2 bg-[#232a3a]" />
-
+ 
                     {accountOptions.map((account) => (
                       <DropdownMenuItem
                         key={account.id}
@@ -349,9 +357,9 @@ export function Espacios() {
                         {account.name}
                       </DropdownMenuItem>
                     ))}
-
+ 
                     <DropdownMenuSeparator className="mx-1 my-2 bg-[#232a3a]" />
-
+ 
                     <DropdownMenuItem
                       onSelect={() => setSessionClosed(true)}
                       className="rounded-[16px] px-3 py-3 text-[#ffb4c0] focus:bg-[#2b1a21] focus:text-[#ffb4c0]"
@@ -363,7 +371,7 @@ export function Espacios() {
                 </DropdownMenu>
               ) : null}
             </div>
-
+ 
             <div className={isMobile ? "space-y-3" : "flex items-end justify-between gap-6"}>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
@@ -376,7 +384,7 @@ export function Espacios() {
                   Dejamos lo más usado al frente y el resto en un segundo nivel.
                 </p>
               </div>
-
+ 
               {isMobile ? (
                 <span className="inline-flex w-fit items-center rounded-full border border-[#2d3649] bg-[#151b28] px-3 py-1 text-[12px] font-medium text-[#d5dbea]">
                   {currentHome.spaces.length} espacios
@@ -387,11 +395,11 @@ export function Espacios() {
                 </span>
               )}
             </div>
-
+ 
             {spacesContent}
           </div>
         </div>
-
+ 
         {isMobile && (
           <button
             type="button"
@@ -402,7 +410,7 @@ export function Espacios() {
             Nuevo espacio
           </button>
         )}
-
+ 
         {!isMobile && currentHome.spaces.length > 0 && (
           <button
             type="button"
@@ -414,7 +422,7 @@ export function Espacios() {
           </button>
         )}
       </div>
-
+ 
       <Dialog open={isSpaceModalOpen} onOpenChange={handleSpaceModalChange}>
         <DialogContent className="w-[min(92vw,760px)] rounded-[32px] border border-[#2b3042] bg-[#0f1219] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] [&>button]:hidden">
           <div className="relative overflow-hidden rounded-[32px]">
@@ -427,7 +435,7 @@ export function Espacios() {
                 Panel visual simple para la presentación.
               </DialogDescription>
             </div>
-
+ 
             <div className="relative space-y-7 px-6 pb-8 pt-6 sm:px-8">
               <div className="space-y-3">
                 <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
@@ -447,7 +455,7 @@ export function Espacios() {
                     onChange={(event) => {
                       const nextValue = event.target.value;
                       setNewSpaceName(nextValue);
-
+ 
                       if (nextValue.trim()) {
                         setSpaceNameError("");
                       }
@@ -462,7 +470,7 @@ export function Espacios() {
                   </p>
                 ) : null}
               </div>
-
+ 
               <div className="space-y-3">
                 <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
                   Tipo de espacio
@@ -470,7 +478,7 @@ export function Espacios() {
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {spaceTypeOptions.map((type) => {
                     const isSelected = selectedType === type.id;
-
+ 
                     return (
                       <button
                         key={type.id}
@@ -491,7 +499,7 @@ export function Espacios() {
                   })}
                 </div>
               </div>
-
+ 
               <button
                 type="button"
                 onClick={handleAddSpace}
@@ -508,7 +516,7 @@ export function Espacios() {
           </div>
         </DialogContent>
       </Dialog>
-
+ 
       <Dialog open={isHomeModalOpen} onOpenChange={setIsHomeModalOpen}>
         <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#2b3042] bg-[#0f1219] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] [&>button]:hidden">
           <div className="relative overflow-hidden rounded-[32px]">
@@ -521,7 +529,7 @@ export function Espacios() {
                 Elegí o sumá hogares desde el dropdown principal.
               </DialogDescription>
             </div>
-
+ 
             <div className="relative space-y-6 px-6 pb-8 pt-6 sm:px-8">
               <div className="space-y-3">
                 <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
@@ -537,7 +545,7 @@ export function Espacios() {
                   />
                 </div>
               </div>
-
+ 
               <div className="space-y-3">
                 <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
                   Ubicación
@@ -552,7 +560,7 @@ export function Espacios() {
                   />
                 </div>
               </div>
-
+ 
               <button
                 type="button"
                 onClick={handleAddHome}

@@ -10,7 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
-
+ 
 import {
   ArrowLeft,
   Trash2,
@@ -27,7 +27,7 @@ import {
   type DeviceKind,
 } from "../context/home-context";
 import { useIsMobile } from "../hooks/useIsMobile";
-
+ 
 export function SpaceDetail() {
   const { homeId, spaceId } = useParams<{ homeId?: string; spaceId: string }>();
   const navigate = useNavigate();
@@ -38,6 +38,7 @@ export function SpaceDetail() {
     setSelectedHomeId,
     toggleDevice,
     updateBrightness,
+    turnOffAllDevices,
     addDevice,
     deleteDevice,
   } = useHome();
@@ -47,13 +48,13 @@ export function SpaceDetail() {
   const [deviceNameError, setDeviceNameError] = useState(false);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-
+ 
   useEffect(() => {
     if (homeId && homeId !== selectedHomeId) {
       setSelectedHomeId(homeId);
     }
   }, [homeId, selectedHomeId, setSelectedHomeId]);
-
+ 
   const currentHomeId = homeId || selectedHomeId;
   const home =
     homes.find((candidateHome) => candidateHome.id === currentHomeId) ??
@@ -70,43 +71,43 @@ export function SpaceDetail() {
     (Object.keys(deviceOptions) as DeviceKind[]);
   const selectedDevice =
     devices.find((device) => device.id === selectedDeviceId) || null;
-
+ 
   const handleAddDevice = () => {
     if (!newDeviceName.trim()) {
       setDeviceNameError(true);
       return;
     }
-
+ 
     if (!selectedDeviceType) return;
     if (!home || !space) return;
-
+ 
     addDevice(home.id, space.id, newDeviceName.trim(), selectedDeviceType);
     setIsModalOpen(false);
     setNewDeviceName("");
     setSelectedDeviceType(null);
     setDeviceNameError(false);
   };
-
+ 
   const handleOpenDeviceModal = () => {
     setDeviceNameError(false);
     setIsModalOpen(true);
   };
-
+ 
   const handleCloseDeviceModal = () => {
     setDeviceNameError(false);
     setIsModalOpen(false);
   };
-
+ 
   const handleOpenDeviceDetails = (deviceId: string) => {
     setSelectedDeviceId(deviceId);
     setIsDeleteConfirmOpen(false);
   };
-
+ 
   const handleCloseDeviceDetails = () => {
     setSelectedDeviceId(null);
     setIsDeleteConfirmOpen(false);
   };
-
+ 
   const handleDeviceCardKeyDown = (
     event: React.KeyboardEvent<HTMLDivElement>,
     deviceId: string,
@@ -116,22 +117,22 @@ export function SpaceDetail() {
       handleOpenDeviceDetails(deviceId);
     }
   };
-
+ 
   const handleDeleteSelectedDevice = () => {
     if (!selectedDevice || !home || !space) return;
-
+ 
     deleteDevice(home.id, space.id, selectedDevice.id);
     handleCloseDeviceDetails();
   };
-
+ 
   const renderDeviceModal = () => {
     if (!isModalOpen) return null;
-
+ 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
         <div className="relative w-full max-w-[520px] overflow-hidden rounded-[32px] bg-[#080a10] shadow-[0_24px_80px_rgba(0,0,0,0.6)]">
           <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#fbbf24_0%,rgba(251,191,36,0.22)_26%,transparent_70%)]" />
-
+ 
           <div className="relative px-6 pb-8 pt-8 sm:px-8">
             <div className="mb-8 flex items-center justify-between">
               <h2 className="text-[22px] font-semibold text-white">Nuevo Dispositivo</h2>
@@ -143,7 +144,7 @@ export function SpaceDetail() {
                 <X size={18} />
               </button>
             </div>
-
+ 
             <div className="flex flex-col gap-8">
               <div className="flex flex-col gap-3">
                 <label className="text-[11px] font-semibold tracking-wider text-gray-400">
@@ -173,7 +174,7 @@ export function SpaceDetail() {
                   <p className="text-sm text-[#fca5a5]">Ingresá un nombre.</p>
                 ) : null}
               </div>
-
+ 
               <div className="flex flex-col gap-3">
                 <label className="text-[11px] font-semibold tracking-wider text-gray-400">
                   TIPO DE DISPOSITIVO
@@ -182,7 +183,7 @@ export function SpaceDetail() {
                   {availableTypes.map((type) => {
                     const option = deviceOptions[type];
                     const isSelected = selectedDeviceType === type;
-
+ 
                     return (
                       <button
                         key={type}
@@ -203,7 +204,7 @@ export function SpaceDetail() {
                   })}
                 </div>
               </div>
-
+ 
               <button
                 type="button"
                 onClick={handleAddDevice}
@@ -222,15 +223,15 @@ export function SpaceDetail() {
       </div>
     );
   };
-
+ 
   const renderDeviceDetailsModal = () => {
     if (!selectedDevice) return null;
-
+ 
     const deviceType = deviceOptions[selectedDevice.kind].type;
     const isLight = deviceType === "light";
     const isOn = selectedDevice.status === "on";
     const deviceLabel = deviceOptions[selectedDevice.kind].label;
-
+ 
     return (
       <>
         <div
@@ -242,13 +243,13 @@ export function SpaceDetail() {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#fbbf24_0%,rgba(251,191,36,0.22)_26%,transparent_70%)]" />
-
+ 
             <div className="relative px-6 pb-8 pt-8 sm:px-8">
               <div className="mb-8 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div
                     className={`flex h-14 w-14 items-center justify-center rounded-[18px] border ${
-                      isOn
+                      isOn && selectedDevice.brightness !== 0
                         ? "border-[#f4c95d] bg-[#0f1219] text-[#f4c95d]"
                         : "border-[#2b3042] bg-[#151a25] text-[#8f97ab]"
                     }`}
@@ -267,7 +268,7 @@ export function SpaceDetail() {
                     </p>
                   </div>
                 </div>
-
+ 
                 <button
                   type="button"
                   onClick={handleCloseDeviceDetails}
@@ -276,7 +277,7 @@ export function SpaceDetail() {
                   <X size={18} />
                 </button>
               </div>
-
+ 
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="rounded-[20px] border border-[#2b3042] bg-[#111722] p-4">
@@ -287,7 +288,7 @@ export function SpaceDetail() {
                       {isOn ? "Encendido" : "Apagado"}
                     </p>
                   </div>
-
+ 
                   <div className="rounded-[20px] border border-[#2b3042] bg-[#111722] p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7f879c]">
                       Ambiente
@@ -296,7 +297,7 @@ export function SpaceDetail() {
                       {spaceName}
                     </p>
                   </div>
-
+ 
                   <div className="rounded-[20px] border border-[#2b3042] bg-[#111722] p-4">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7f879c]">
                       Acción rápida
@@ -319,7 +320,7 @@ export function SpaceDetail() {
                     </button>
                   </div>
                 </div>
-
+ 
                 <div className="rounded-[24px] border border-[#2b3042] bg-[#111722] p-5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
                     Información
@@ -329,7 +330,7 @@ export function SpaceDetail() {
                       ? "Podés ver y ajustar la intensidad de esta luz desde este segundo nivel."
                       : "Acá quedan las acciones menos frecuentes para no recargar la grilla principal."}
                   </p>
-
+ 
                   {isLight ? (
                     <div className="mt-5">
                       <div className="mb-2 flex items-center justify-between text-sm text-[#aeb6c8]">
@@ -367,7 +368,7 @@ export function SpaceDetail() {
                     </div>
                   ) : null}
                 </div>
-
+ 
                 <div className="flex flex-col gap-3 border-t border-[#1f2432] pt-5 sm:flex-row sm:justify-end">
                   <button
                     type="button"
@@ -382,7 +383,7 @@ export function SpaceDetail() {
             </div>
           </div>
         </div>
-
+ 
         <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
           <AlertDialogContent className="max-w-[460px] rounded-[28px] border border-[#2b3042] bg-[#0f1219] p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
             <AlertDialogHeader className="text-left">
@@ -394,7 +395,7 @@ export function SpaceDetail() {
                 Esta acción no se puede deshacer.
               </AlertDialogDescription>
             </AlertDialogHeader>
-
+ 
             <AlertDialogFooter className="mt-2">
               <AlertDialogCancel className="rounded-[18px] border border-[#2b3548] bg-[#141a26] text-[#d0d6e3] hover:bg-[#192131] hover:text-white">
                 Cancelar
@@ -411,7 +412,7 @@ export function SpaceDetail() {
       </>
     );
   };
-
+ 
   return (
     <>
       <div className="min-h-screen bg-[#000000] text-white pb-20 md:pb-8">
@@ -434,18 +435,24 @@ export function SpaceDetail() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button className="flex h-[46px] w-[46px] items-center justify-center rounded-[14px] border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white">
+              <button
+                className="flex h-[46px] w-[46px] items-center justify-center rounded-[14px] border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
+                onClick={() => {
+                  if (home && space) turnOffAllDevices(home.id, space.id);
+                }}
+                title="Apagar todos los dispositivos"
+              >
                 <Power size={18} />
               </button>
             </div>
           </div>
         </div>
-
+ 
         <div className="px-6">
           <h2 className="text-[#8a8d9e] text-[12px] font-bold tracking-widest uppercase mb-4">
             Dispositivos
           </h2>
-
+ 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {devices.map((device) => (
               <div
@@ -460,7 +467,7 @@ export function SpaceDetail() {
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-[46px] h-[46px] rounded-2xl flex items-center justify-center ${
-                        device.status === "on"
+                        device.status === "on" && device.brightness !== 0
                           ? "border-2 border-[#f4c95d] bg-[#0f1219] text-[#f4c95d]"
                           : "bg-[#202636] text-[#8f97ab]"
                       }`}
@@ -479,7 +486,7 @@ export function SpaceDetail() {
                       </p>
                     </div>
                   </div>
-
+ 
                   <div className="flex items-center gap-4">
                     <button
                       type="button"
@@ -502,7 +509,7 @@ export function SpaceDetail() {
                 </div>
               </div>
             ))}
-
+ 
             {!isMobile ? (
               <button
                 type="button"
@@ -521,7 +528,7 @@ export function SpaceDetail() {
           </div>
         </div>
       </div>
-
+ 
       {isMobile ? (
         <button
           type="button"
@@ -532,7 +539,7 @@ export function SpaceDetail() {
           Agregar dispositivo
         </button>
       ) : null}
-
+ 
       {renderDeviceModal()}
       {renderDeviceDetailsModal()}
     </>

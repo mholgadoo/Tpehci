@@ -26,7 +26,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
+ 
 export type DeviceKind =
   | "lamp"
   | "speaker"
@@ -38,7 +38,7 @@ export type DeviceKind =
   | "door"
   | "sprinkler"
   | "vacuum";
-
+ 
 export type DeviceType =
   | "light"
   | "audio"
@@ -49,7 +49,7 @@ export type DeviceType =
   | "access"
   | "water"
   | "cleaning";
-
+ 
 export type SpaceKind =
   | "sala"
   | "dormitorio"
@@ -59,7 +59,7 @@ export type SpaceKind =
   | "garaje"
   | "jardin"
   | "terraza";
-
+ 
 export interface Device {
   id: string;
   name: string;
@@ -67,34 +67,34 @@ export interface Device {
   status: "on" | "off";
   brightness?: number;
 }
-
+ 
 export interface Space {
   id: string;
   name: string;
   kind: SpaceKind;
   devices: Device[];
 }
-
+ 
 export interface Home {
   id: string;
   name: string;
   subtitle: string;
   spaces: Space[];
 }
-
+ 
 interface DeviceOption {
   id: DeviceKind;
   label: string;
   type: DeviceType;
   icon: LucideIcon;
 }
-
+ 
 interface SpaceOption {
   id: SpaceKind;
   name: string;
   icon: LucideIcon;
 }
-
+ 
 export const deviceOptions: Record<DeviceKind, DeviceOption> = {
   lamp: {
     id: "lamp",
@@ -157,7 +157,7 @@ export const deviceOptions: Record<DeviceKind, DeviceOption> = {
     type: "cleaning",
   },
 };
-
+ 
 export const deviceTypeLabels: Record<DeviceType, string> = {
   light: "Iluminación",
   audio: "Audio",
@@ -169,7 +169,7 @@ export const deviceTypeLabels: Record<DeviceType, string> = {
   water: "Agua",
   cleaning: "Limpieza",
 };
-
+ 
 export const spaceTypeOptions: SpaceOption[] = [
   { id: "sala", name: "Sala de Estar", icon: Armchair },
   { id: "dormitorio", name: "Dormitorio", icon: Bed },
@@ -180,7 +180,7 @@ export const spaceTypeOptions: SpaceOption[] = [
   { id: "jardin", name: "Jardín", icon: TreePine },
   { id: "terraza", name: "Terraza", icon: Sun },
 ];
-
+ 
 export const allowedDevicesBySpace: Record<SpaceKind, DeviceKind[]> = {
   cocina: ["lamp", "oven", "fridge", "alarm", "air"],
   sala: ["lamp", "speaker", "blind", "alarm"],
@@ -191,7 +191,7 @@ export const allowedDevicesBySpace: Record<SpaceKind, DeviceKind[]> = {
   jardin: ["sprinkler", "lamp", "alarm"],
   terraza: ["lamp", "speaker", "blind"],
 };
-
+ 
 export const createDevice = (
   id: string,
   name: string,
@@ -205,21 +205,21 @@ export const createDevice = (
   status,
   brightness,
 });
-
+ 
 export function getDeviceIcon(kind: DeviceKind, size = 20, strokeWidth = 1.8) {
   const Icon = deviceOptions[kind].icon;
   return <Icon size={size} strokeWidth={strokeWidth} />;
 }
-
+ 
 export function getSpaceIcon(kind: SpaceKind, size = 28, strokeWidth = 1.8) {
   const option = spaceTypeOptions.find((space) => space.id === kind);
-
+ 
   if (!option) return null;
-
+ 
   const Icon = option.icon;
   return <Icon size={size} strokeWidth={strokeWidth} />;
 }
-
+ 
 const initialHomes: Home[] = [
   {
     id: "mi-hogar",
@@ -374,7 +374,7 @@ const initialHomes: Home[] = [
     ],
   },
 ];
-
+ 
 interface HomeContextValue {
   homes: Home[];
   selectedHomeId: string;
@@ -389,6 +389,7 @@ interface HomeContextValue {
     deviceId: string,
     value: number,
   ) => void;
+  turnOffAllDevices: (homeId: string, spaceId: string) => void;
   addDevice: (
     homeId: string,
     spaceId: string,
@@ -397,9 +398,9 @@ interface HomeContextValue {
   ) => void;
   deleteDevice: (homeId: string, spaceId: string, deviceId: string) => void;
 }
-
+ 
 const HomeContext = createContext<HomeContextValue | null>(null);
-
+ 
 function updateSpace(
   homes: Home[],
   homeId: string,
@@ -417,14 +418,14 @@ function updateSpace(
       : home,
   );
 }
-
+ 
 export function HomeProvider({ children }: { children: ReactNode }) {
   const [homes, setHomes] = useState<Home[]>(initialHomes);
   const [selectedHomeId, setSelectedHomeId] = useState(initialHomes[0].id);
-
+ 
   const currentHome =
     homes.find((home) => home.id === selectedHomeId) ?? homes[0];
-
+ 
   const value = useMemo<HomeContextValue>(
     () => ({
       homes,
@@ -438,10 +439,10 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           subtitle: subtitle || "Nuevo hogar",
           spaces: [],
         };
-
+ 
         setHomes((previousHomes) => [...previousHomes, newHome]);
         setSelectedHomeId(newHome.id);
-
+ 
         return newHome;
       },
       addSpace: (homeId, name, kind) => {
@@ -451,7 +452,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           kind,
           devices: [],
         };
-
+ 
         setHomes((previousHomes) =>
           previousHomes.map((home) =>
             home.id === homeId
@@ -479,9 +480,25 @@ export function HomeProvider({ children }: { children: ReactNode }) {
         setHomes((previousHomes) =>
           updateSpace(previousHomes, homeId, spaceId, (space) => ({
             ...space,
-            devices: space.devices.map((device) =>
-              device.id === deviceId ? { ...device, brightness: value } : device,
-            ),
+            devices: space.devices.map((device) => {
+              if (device.id !== deviceId) return device;
+              // brightness 0% → apagar automáticamente
+              // brightness >0 con dispositivo apagado → encender automáticamente
+              const newStatus =
+                value === 0 ? "off" : device.status === "off" ? "on" : device.status;
+              return { ...device, brightness: value, status: newStatus };
+            }),
+          })),
+        );
+      },
+      turnOffAllDevices: (homeId, spaceId) => {
+        setHomes((previousHomes) =>
+          updateSpace(previousHomes, homeId, spaceId, (space) => ({
+            ...space,
+            devices: space.devices.map((device) => ({
+              ...device,
+              status: "off" as const,
+            })),
           })),
         );
       },
@@ -494,7 +511,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           kind === "alarm" || kind === "fridge" ? "on" : "off",
           option.type === "light" ? 80 : undefined,
         );
-
+ 
         setHomes((previousHomes) =>
           updateSpace(previousHomes, homeId, spaceId, (space) => ({
             ...space,
@@ -513,16 +530,16 @@ export function HomeProvider({ children }: { children: ReactNode }) {
     }),
     [currentHome, homes, selectedHomeId],
   );
-
+ 
   return <HomeContext.Provider value={value}>{children}</HomeContext.Provider>;
 }
-
+ 
 export function useHome() {
   const context = useContext(HomeContext);
-
+ 
   if (!context) {
     throw new Error("useHome must be used within a HomeProvider");
   }
-
+ 
   return context;
 }
