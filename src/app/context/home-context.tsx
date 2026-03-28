@@ -75,15 +75,22 @@ export interface Space {
   devices: Device[];
 }
  
+export interface HomeAlarm {
+  id: string;
+  name: string;
+  status: "on" | "off";
+}
+
 export interface Home {
   id: string;
   name: string;
   subtitle: string;
   shortcuts?: HomeShortcut[];
+  alarms?: HomeAlarm[];
   spaces: Space[];
 }
 
-export type HomeShortcutKind = "alarm" | "speaker" | "air" | "blind" | "door";
+export type HomeShortcutKind = "alarm" | "speaker" | "air" | "blind" | "door" | "oven" | "vacuum" | "sprinkler";
 
 export interface HomeShortcut {
   id: string;
@@ -234,6 +241,10 @@ const initialHomes: Home[] = [
     id: "mi-hogar",
     name: "Mi Hogar",
     subtitle: "Palermo, Buenos Aires",
+    alarms: [
+      { id: "alarm-1", name: "Sistema Central", status: "on" },
+      { id: "alarm-2", name: "Puerta Principal", status: "off" },
+    ],
     spaces: [
       {
         id: "sala",
@@ -321,6 +332,9 @@ const initialHomes: Home[] = [
     id: "casa-playa",
     name: "Casa de Playa",
     subtitle: "Pinamar, Buenos Aires",
+    alarms: [
+      { id: "alarm-3", name: "Sistema Perimetral", status: "off" },
+    ],
     spaces: [
       {
         id: "sala",
@@ -403,6 +417,9 @@ interface HomeContextValue {
     kind: DeviceKind,
   ) => void;
   deleteDevice: (homeId: string, spaceId: string, deviceId: string) => void;
+  addAlarm: (homeId: string, name: string) => void;
+  deleteAlarm: (homeId: string, alarmId: string) => void;
+  toggleAlarmStatus: (homeId: string, alarmId: string) => void;
 }
  
 const HomeContext = createContext<HomeContextValue | null>(null);
@@ -439,11 +456,20 @@ export function HomeProvider({ children }: { children: ReactNode }) {
       setSelectedHomeId,
       currentHome,
       addHome: (name, subtitle, shortcuts) => {
+        const normalizedShortcuts = [
+          {
+            id: `alarm-${Date.now()}`,
+            kind: "alarm" as const,
+            name: "",
+          },
+          ...shortcuts.filter((shortcut) => shortcut.kind !== "alarm"),
+        ];
+
         const newHome: Home = {
           id: name.toLowerCase().replace(/\s+/g, "-"),
           name,
           subtitle: subtitle || "Nuevo hogar",
-          shortcuts,
+          shortcuts: normalizedShortcuts,
           spaces: [],
         };
  
@@ -548,9 +574,57 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           })),
         );
       },
+      addAlarm: (homeId, name) => {
+        setHomes((previousHomes) =>
+          previousHomes.map((home) =>
+            home.id === homeId
+              ? {
+                  ...home,
+                  alarms: [
+                    ...(home.alarms ?? []),
+                    {
+                      id: `alarm-${Date.now()}`,
+                      name,
+                      status: "off" as const,
+                    },
+                  ],
+                }
+              : home,
+          ),
+        );
+      },
+      deleteAlarm: (homeId, alarmId) => {
+        setHomes((previousHomes) =>
+          previousHomes.map((home) =>
+            home.id === homeId
+              ? {
+                  ...home,
+                  alarms: (home.alarms ?? []).filter((alarm) => alarm.id !== alarmId),
+                }
+              : home,
+          ),
+        );
+      },
+      toggleAlarmStatus: (homeId, alarmId) => {
+        setHomes((previousHomes) =>
+          previousHomes.map((home) =>
+            home.id === homeId
+              ? {
+                  ...home,
+                  alarms: (home.alarms ?? []).map((alarm) =>
+                    alarm.id === alarmId
+                      ? { ...alarm, status: alarm.status === "on" ? "off" : "on" }
+                      : alarm,
+                  ),
+                }
+              : home,
+          ),
+        );
+      },
     }),
     [currentHome, homes, selectedHomeId],
   );
+
  
   return <HomeContext.Provider value={value}>{children}</HomeContext.Provider>;
 }

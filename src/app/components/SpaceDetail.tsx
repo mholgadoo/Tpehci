@@ -66,6 +66,11 @@ export function SpaceDetail() {
   const devices = space?.devices ?? [];
   const spaceName = space?.name || "Espacio";
   const activeDevices = devices.filter((device) => device.status === "on").length;
+  const isDeviceVisuallyOn = (device: (typeof devices)[number]) => {
+    const deviceType = deviceOptions[device.kind].type;
+    if (deviceType !== "light") return device.status === "on";
+    return device.status === "on" && (device.brightness ?? 100) > 0;
+  };
   const availableTypes =
     (space ? allowedDevicesBySpace[space.kind] : undefined) ||
     (Object.keys(deviceOptions) as DeviceKind[]);
@@ -229,7 +234,7 @@ export function SpaceDetail() {
  
     const deviceType = deviceOptions[selectedDevice.kind].type;
     const isLight = deviceType === "light";
-    const isOn = selectedDevice.status === "on";
+    const isOn = isDeviceVisuallyOn(selectedDevice);
     const deviceLabel = deviceOptions[selectedDevice.kind].label;
  
     return (
@@ -461,7 +466,7 @@ export function SpaceDetail() {
                   <div className="flex items-center gap-4">
                     <div
                       className={`w-[46px] h-[46px] rounded-2xl flex items-center justify-center ${
-                        device.status === "on" && device.brightness !== 0
+                        isDeviceVisuallyOn(device)
                           ? "border-2 border-[#f4c95d] bg-[#0f1219] text-[#f4c95d]"
                           : "bg-[#202636] text-[#8f97ab]"
                       }`}
@@ -472,11 +477,11 @@ export function SpaceDetail() {
                       <h3 className="text-[15px] font-medium text-white mb-0.5">{device.name}</h3>
                       <p
                         className={`text-[13px] ${
-                          device.status === "on" ? "text-[#fbbf24]" : "text-[#6b7280]"
+                          isDeviceVisuallyOn(device) ? "text-[#fbbf24]" : "text-[#6b7280]"
                         }`}
                       >
-                        {device.status === "on" ? "Encendido" : "Apagado"}
-                        {device.status === "on" && device.brightness !== undefined && ` · ${device.brightness}%`}
+                        {isDeviceVisuallyOn(device) ? "Encendido" : "Apagado"}
+                        {isDeviceVisuallyOn(device) && device.brightness !== undefined && ` · ${device.brightness}%`}
                       </p>
                     </div>
                   </div>

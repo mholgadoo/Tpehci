@@ -1,9 +1,12 @@
 import {
   Bell,
   Blinds,
+  Bot,
   Check,
   ChevronDown,
+  CookingPot,
   DoorOpen,
+  Droplet,
   LogOut,
   Pencil,
   Plus,
@@ -12,13 +15,16 @@ import {
   User,
   Users,
   Wind,
+  X,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router";
+import { toast } from "sonner";
 import { getAccountInitials, useAccount } from "../context/account-context";
 import {
   getDeviceIcon,
   type HomeShortcut,
+  type HomeAlarm,
   getSpaceIcon,
   type HomeShortcutKind,
   spaceTypeOptions,
@@ -26,16 +32,6 @@ import {
   useHome,
 } from "../context/home-context";
 import { useIsMobile } from "../hooks/useIsMobile";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "./ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -63,11 +59,22 @@ export function Espacios() {
     doorMode: "Cerrar" | "Abrir" | "Bloquear" | "Desbloquear";
   };
 
+  type AlarmOptionsState = {
+    houseModeOn: boolean;
+    regularModeOn: boolean;
+    securityCode: string;
+  };
+
+  type PendingAlarmModeChange = {
+    alarmId: string;
+    mode: "house" | "regular";
+  };
+
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { accountOptions, selectedAccount, setSelectedAccount, sessionClosed, setSessionClosed } =
     useAccount();
-  const { homes, selectedHomeId, setSelectedHomeId, currentHome, addHome, updateHome, addSpace } =
+  const { homes, selectedHomeId, setSelectedHomeId, currentHome, addHome, updateHome, addSpace, addAlarm } =
     useHome();
   const [isSpaceModalOpen, setIsSpaceModalOpen] = useState(false);
   const [isHomeModalOpen, setIsHomeModalOpen] = useState(false);
@@ -92,8 +99,21 @@ export function Espacios() {
   const [activeShortcut, setActiveShortcut] = useState<HomeShortcut | null>(null);
   const [activeDoorShortcut, setActiveDoorShortcut] = useState<HomeShortcut | null>(null);
   const [shortcutControlById, setShortcutControlById] = useState<Record<string, ShortcutControlState>>({});
-  const [isHomeAlarmOn, setIsHomeAlarmOn] = useState(false);
-  const [isAlarmConfirmOpen, setIsAlarmConfirmOpen] = useState(false);
+  const [isAlarmsModalOpen, setIsAlarmsModalOpen] = useState(false);
+  const [activeAlarm, setActiveAlarm] = useState<HomeAlarm | null>(null);
+  const [isAlarmOptionsModalOpen, setIsAlarmOptionsModalOpen] = useState(false);
+  const [alarmOptionsById, setAlarmOptionsById] = useState<Record<string, AlarmOptionsState>>({});
+  const [isSecurityCodeModalOpen, setIsSecurityCodeModalOpen] = useState(false);
+  const [pendingAlarmModeChange, setPendingAlarmModeChange] = useState<PendingAlarmModeChange | null>(null);
+  const [securityCodeInput, setSecurityCodeInput] = useState("");
+  const [securityCodeError, setSecurityCodeError] = useState("");
+  const [isChangeSecurityCodeModalOpen, setIsChangeSecurityCodeModalOpen] = useState(false);
+  const [changeSecurityCodeAlarmId, setChangeSecurityCodeAlarmId] = useState<string | null>(null);
+  const [changeSecurityCodeOld, setChangeSecurityCodeOld] = useState("");
+  const [changeSecurityCodeNew, setChangeSecurityCodeNew] = useState("");
+  const [changeSecurityCodeError, setChangeSecurityCodeError] = useState("");
+  const [isCreateAlarmModalOpen, setIsCreateAlarmModalOpen] = useState(false);
+  const [draftAlarmName, setDraftAlarmName] = useState("");
  
   const resetSpaceForm = () => {
     setNewSpaceName("");
@@ -131,15 +151,10 @@ export function Espacios() {
   const handleAddHome = () => {
     const trimmedHomeName = newHomeName.trim();
     if (!trimmedHomeName) return;
-    addHome(trimmedHomeName, newHomeLocation, newHomeShortcuts);
+    addHome(trimmedHomeName, newHomeLocation, []);
     setIsHomeModalOpen(false);
     setNewHomeName("");
     setNewHomeLocation("");
-    setNewHomeShortcuts([]);
-    setIsShortcutComposerOpen(false);
-    setDraftShortcutKind(null);
-    setDraftShortcutName("");
-    setHomeStep(0);
   };
 
   const handleHomeModalChange = (open: boolean) => {
@@ -147,25 +162,32 @@ export function Espacios() {
     if (!open) {
       setNewHomeName("");
       setNewHomeLocation("");
-      setNewHomeShortcuts([]);
-      setIsShortcutComposerOpen(false);
-      setDraftShortcutKind(null);
-      setDraftShortcutName("");
-      setHomeStep(0);
     }
   };
 
   const homeShortcuts: Array<{ id: HomeShortcutKind; label: string; icon: ReactNode; description: string }> = [
-    { id: "alarm", label: "Alarma", icon: <Bell size={20} />, description: "Seguridad" },
     { id: "speaker", label: "Parlante", icon: <Speaker size={20} />, description: "Audio" },
     { id: "air", label: "Aire acondicionado", icon: <Wind size={20} />, description: "Clima" },
     { id: "blind", label: "Persiana", icon: <Blinds size={20} />, description: "Cerramiento" },
     { id: "door", label: "Puerta", icon: <DoorOpen size={20} />, description: "Acceso" },
   ];
 
+  const selectedNewShortcutKinds = new Set(newHomeShortcuts.map((shortcut) => shortcut.kind));
+  const availableNewShortcutOptions = homeShortcuts.filter(
+    (shortcut) => !selectedNewShortcutKinds.has(shortcut.id),
+  );
+
+  const selectedEditShortcutKinds = new Set(editHomeShortcuts.map((shortcut) => shortcut.kind));
+  const availableEditShortcutOptions = homeShortcuts.filter(
+    (shortcut) => !selectedEditShortcutKinds.has(shortcut.id),
+  );
+
   const addShortcutToHome = () => {
     const trimmedName = draftShortcutName.trim();
     if (!draftShortcutKind || !trimmedName) return;
+
+    const alreadyExists = newHomeShortcuts.some((shortcut) => shortcut.kind === draftShortcutKind);
+    if (alreadyExists) return;
 
     const newShortcut: HomeShortcut = {
       id: `${draftShortcutKind}-${Date.now()}`,
@@ -190,20 +212,15 @@ export function Espacios() {
     { id: "shortcuts", label: "Shortcuts" },
   ];
 
-  const openEditHomeModal = (homeName: string, homeSubtitle: string, shortcuts: HomeShortcut[] = []) => {
+  const openEditHomeModal = (homeName: string, homeSubtitle: string) => {
     setEditHomeName(homeName);
     setEditHomeLocation(homeSubtitle);
-    setEditHomeStep(0);
-    setEditHomeShortcuts(shortcuts);
-    setIsEditShortcutComposerOpen(false);
-    setDraftEditShortcutKind(null);
-    setDraftEditShortcutName("");
     setIsEditHomeModalOpen(true);
   };
 
   const handleEditHome = () => {
     if (!currentHome) return;
-    updateHome(currentHome.id, editHomeName, editHomeLocation, editHomeShortcuts);
+    updateHome(currentHome.id, editHomeName, editHomeLocation, currentHome.shortcuts ?? []);
     setIsEditHomeModalOpen(false);
   };
 
@@ -211,7 +228,11 @@ export function Espacios() {
     if (kind === "alarm") return <Bell size={size} strokeWidth={strokeWidth} />;
     if (kind === "speaker") return <Speaker size={size} strokeWidth={strokeWidth} />;
     if (kind === "air") return <Wind size={size} strokeWidth={strokeWidth} />;
+    if (kind === "blind") return <Blinds size={size} strokeWidth={strokeWidth} />;
     if (kind === "door") return <DoorOpen size={size} strokeWidth={strokeWidth} />;
+    if (kind === "oven") return <CookingPot size={size} strokeWidth={strokeWidth} />;
+    if (kind === "vacuum") return <Bot size={size} strokeWidth={strokeWidth} />;
+    if (kind === "sprinkler") return <Droplet size={size} strokeWidth={strokeWidth} />;
     return <Blinds size={size} strokeWidth={strokeWidth} />;
   };
 
@@ -303,6 +324,137 @@ export function Espacios() {
     }));
   };
 
+  const getDefaultAlarmOptions = (): AlarmOptionsState => ({
+    houseModeOn: false,
+    regularModeOn: false,
+    securityCode: "1234",
+  });
+
+  const openAlarmOptionsPopup = (alarm: HomeAlarm) => {
+    setAlarmOptionsById((previousState) => {
+      if (previousState[alarm.id]) return previousState;
+      return {
+        ...previousState,
+        [alarm.id]: getDefaultAlarmOptions(),
+      };
+    });
+    setActiveAlarm(alarm);
+    setIsAlarmOptionsModalOpen(true);
+  };
+
+  const updateAlarmOptions = (alarmId: string, patch: Partial<AlarmOptionsState>) => {
+    setAlarmOptionsById((previousState) => ({
+      ...previousState,
+      [alarmId]: {
+        ...(previousState[alarmId] ?? getDefaultAlarmOptions()),
+        ...patch,
+      },
+    }));
+  };
+
+  const isAlarmActive = (alarm: HomeAlarm): boolean => {
+    const options = alarmOptionsById[alarm.id];
+    if (!options) return false;
+    return options.houseModeOn || options.regularModeOn;
+  };
+
+  const openSecurityCodeModal = (alarmId: string, mode: "house" | "regular") => {
+    setPendingAlarmModeChange({ alarmId, mode });
+    setSecurityCodeInput("");
+    setSecurityCodeError("");
+    setIsSecurityCodeModalOpen(true);
+  };
+
+  const confirmSecurityCodeAndToggleMode = () => {
+    if (!pendingAlarmModeChange) return;
+
+    const normalizedCode = securityCodeInput.trim();
+    if (!/^\d{4}$/.test(normalizedCode)) {
+      setSecurityCodeError("El código debe tener exactamente 4 dígitos numéricos.");
+      return;
+    }
+
+    const currentCode =
+      (alarmOptionsById[pendingAlarmModeChange.alarmId] ?? getDefaultAlarmOptions()).securityCode;
+
+    if (normalizedCode !== currentCode) {
+      setSecurityCodeError("Código de seguridad incorrecto.");
+      return;
+    }
+
+    const currentState =
+      alarmOptionsById[pendingAlarmModeChange.alarmId] ?? getDefaultAlarmOptions();
+
+    if (pendingAlarmModeChange.mode === "house") {
+      updateAlarmOptions(pendingAlarmModeChange.alarmId, {
+        houseModeOn: !currentState.houseModeOn,
+      });
+    } else {
+      updateAlarmOptions(pendingAlarmModeChange.alarmId, {
+        regularModeOn: !currentState.regularModeOn,
+      });
+    }
+
+    setIsSecurityCodeModalOpen(false);
+    setPendingAlarmModeChange(null);
+    setSecurityCodeInput("");
+    setSecurityCodeError("");
+  };
+
+  const openChangeSecurityCodeModal = (alarmId: string) => {
+    setChangeSecurityCodeAlarmId(alarmId);
+    setChangeSecurityCodeOld("");
+    setChangeSecurityCodeNew("");
+    setChangeSecurityCodeError("");
+    setIsChangeSecurityCodeModalOpen(true);
+  };
+
+  const confirmChangeSecurityCode = () => {
+    if (!changeSecurityCodeAlarmId) return;
+
+    const normalizedOld = changeSecurityCodeOld.trim();
+    const normalizedNew = changeSecurityCodeNew.trim();
+
+    // Validar código antiguo
+    if (!/^\d{4}$/.test(normalizedOld)) {
+      setChangeSecurityCodeError("El código actual debe tener exactamente 4 dígitos numéricos.");
+      return;
+    }
+
+    // Validar código nuevo
+    if (!/^\d{4}$/.test(normalizedNew)) {
+      setChangeSecurityCodeError("El nuevo código debe tener exactamente 4 dígitos numéricos.");
+      return;
+    }
+
+    // Verificar que el código antiguo sea correcto
+    const currentCode =
+      (alarmOptionsById[changeSecurityCodeAlarmId] ?? getDefaultAlarmOptions()).securityCode;
+
+    if (normalizedOld !== currentCode) {
+      setChangeSecurityCodeError("El código de seguridad actual es incorrecto.");
+      return;
+    }
+
+    // Verificar que no sean iguales
+    if (normalizedOld === normalizedNew) {
+      setChangeSecurityCodeError("El nuevo código debe ser diferente al actual.");
+      return;
+    }
+
+    // Actualizar el código
+    updateAlarmOptions(changeSecurityCodeAlarmId, { securityCode: normalizedNew });
+
+    // Mostrar notificación de éxito
+    toast.success("Código de seguridad actualizado correctamente");
+
+    setIsChangeSecurityCodeModalOpen(false);
+    setChangeSecurityCodeAlarmId(null);
+    setChangeSecurityCodeOld("");
+    setChangeSecurityCodeNew("");
+    setChangeSecurityCodeError("");
+  };
+
   const shortcutsForHeader: HomeShortcut[] = [
     { id: `${currentHome.id}-alarm-default`, kind: "alarm", name: "Alarma" },
     ...(currentHome.shortcuts ?? []).filter((shortcut) => shortcut.kind !== "alarm"),
@@ -310,17 +462,14 @@ export function Espacios() {
 
   const handleEditHomeModalChange = (open: boolean) => {
     setIsEditHomeModalOpen(open);
-    if (!open) {
-      setEditHomeStep(0);
-      setIsEditShortcutComposerOpen(false);
-      setDraftEditShortcutKind(null);
-      setDraftEditShortcutName("");
-    }
   };
 
   const addShortcutToEditHome = () => {
     const trimmedName = draftEditShortcutName.trim();
     if (!draftEditShortcutKind || !trimmedName) return;
+
+    const alreadyExists = editHomeShortcuts.some((shortcut) => shortcut.kind === draftEditShortcutKind);
+    if (alreadyExists) return;
 
     const newShortcut: HomeShortcut = {
       id: `${draftEditShortcutKind}-${Date.now()}`,
@@ -334,12 +483,6 @@ export function Espacios() {
     setIsEditShortcutComposerOpen(false);
   };
 
-  const removeShortcutFromEditHome = (shortcutId: string) => {
-    setEditHomeShortcuts((previousShortcuts) =>
-      previousShortcuts.filter((shortcut) => shortcut.id !== shortcutId),
-    );
-  };
- 
   if (sessionClosed) {
     return (
       <div className="px-6 py-12 text-white">
@@ -376,10 +519,14 @@ export function Espacios() {
           <Link
             key={space.id}
             to={`/espacio/${currentHome.id}/${space.id}`}
-            className={`group rounded-[30px] border border-[#20283a] bg-[#101620]/92 shadow-[0_18px_44px_rgba(0,0,0,0.18)] transition-all ${
+            className={`group rounded-[30px] border bg-gradient-to-br shadow-[0_18px_44px_rgba(0,0,0,0.18)] transition-all ${
+              allOff
+                ? "border-[#2b3448] from-[#121722] to-[#080a10]"
+                : "border-[#2b3448] from-[#181d28] to-[#0c1017] shadow-[0_18px_44px_rgba(214,163,57,0.08)]"
+            } ${
               isMobile
-                ? "block p-5 hover:border-[#39445a]"
-                : "relative flex min-h-[240px] flex-col justify-between p-6 pr-24 hover:-translate-y-1 hover:border-[#39445a]"
+                ? "block p-5 hover:border-[#465168]"
+                : "relative flex min-h-[240px] flex-col justify-between p-6 pr-24 hover:-translate-y-1 hover:border-[#465168]"
             }`}
           >
             <div>
@@ -387,7 +534,7 @@ export function Espacios() {
                 <div
                   className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border ${
                     allOff
-                      ? "border-[#2b3448] bg-[#151b28] text-[#717a8f]"
+                      ? "border-[#2b3548] bg-[#161c28] text-[#a5aec2]"
                       : "border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]"
                   }`}
                 >
@@ -486,7 +633,7 @@ export function Espacios() {
 
                   <button
                     type="button"
-                    onClick={() => openEditHomeModal(currentHome.name, currentHome.subtitle, currentHome.shortcuts ?? [])}
+                    onClick={() => openEditHomeModal(currentHome.name, currentHome.subtitle)}
                     aria-label="Editar hogar seleccionado"
                     className="absolute right-5 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#3d4962] bg-[#151a25] text-[#d2d8e6] transition-colors hover:border-[#5a6b8f] hover:text-white"
                   >
@@ -497,7 +644,7 @@ export function Espacios() {
                 <DropdownMenuContent
                   align="start"
                   sideOffset={12}
-                  className="w-[min(92vw,380px)] rounded-[28px] border border-[#2b3042] bg-[#111520]/96 p-3 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+                  className="w-[min(180vw,600px)] rounded-[28px] border border-[#2b3042] bg-[#111520]/96 p-4 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl"
                 >
                   <p className="px-2 pb-3 pt-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
                     Cambiar hogar
@@ -608,42 +755,46 @@ export function Espacios() {
               ) : null}
               
               {!isMobile && (
-                <div className="flex items-center gap-3">
-                  {shortcutsForHeader.map((shortcut) => {
-                    const isAlarmShortcut = shortcut.kind === "alarm";
-                    const isDoorShortcut = shortcut.kind === "door";
-                    const shortcutControl = shortcutControlById[shortcut.id];
-                    const isActive = isAlarmShortcut
-                      ? isHomeAlarmOn
-                      : isDoorShortcut
-                        ? shortcutControl?.doorMode === "Cerrar" || shortcutControl?.doorMode === "Bloquear"
-                        : Boolean(shortcutControl?.on);
+                <div className="flex flex-col items-start gap-2 rounded-[24px] border border-[#252d3f] bg-transparent px-3 py-2">
+                  <p className="pl-1 text-[12px] font-medium text-[#8f97ab]">Shortcuts</p>
+                  <div className="flex items-center gap-3">
+                    {shortcutsForHeader.map((shortcut) => {
+                      const isAlarmShortcut = shortcut.kind === "alarm";
+                      const isDoorShortcut = shortcut.kind === "door";
+                      const shortcutControl = shortcutControlById[shortcut.id];
+                      const hasActiveAlarm = (currentHome.alarms ?? []).some((alarm) => isAlarmActive(alarm));
+                      const isActive = isAlarmShortcut
+                        ? hasActiveAlarm
+                        : isDoorShortcut
+                          ? shortcutControl?.doorMode === "Cerrar" || shortcutControl?.doorMode === "Bloquear"
+                          : Boolean(shortcutControl?.on);
 
-                    return (
-                      <button
-                        key={shortcut.id}
-                        type="button"
-                        onClick={() => {
-                          if (isAlarmShortcut) {
-                            setIsAlarmConfirmOpen(true);
-                          } else if (isDoorShortcut) {
-                            openDoorPopup(shortcut);
-                          } else {
-                            openShortcutPopup(shortcut);
-                          }
-                        }}
-                        aria-label={isAlarmShortcut ? (isHomeAlarmOn ? "Apagar alarma" : "Encender alarma") : shortcut.name}
-                        className={`rounded-[30px] border px-4 py-5 transition-colors inline-flex items-center justify-center shrink-0 shadow-[0_18px_52px_rgba(0,0,0,0.18)] ${
-                          isActive
-                            ? "border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]"
-                            : "border-[#2b3448] bg-[#111723]/92 text-[#717a8f]"
-                        }`}
-                        title={shortcut.name}
-                      >
-                        {getShortcutIcon(shortcut.kind)}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={shortcut.id}
+                          type="button"
+                          onClick={() => {
+                            if (isAlarmShortcut) {
+                              setIsAlarmsModalOpen(true);
+                            } else if (isDoorShortcut) {
+                              openDoorPopup(shortcut);
+                            } else {
+                              openShortcutPopup(shortcut);
+                            }
+                          }}
+                          aria-label={isAlarmShortcut ? "Gestionar alarmas" : shortcut.name}
+                          className={`rounded-[30px] border px-4 py-5 transition-colors inline-flex items-center justify-center shrink-0 shadow-[0_18px_52px_rgba(0,0,0,0.18)] ${
+                            isActive
+                              ? "border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]"
+                              : "border-[#2b3448] bg-[#111723]/92 text-[#717a8f]"
+                          }`}
+                          title={shortcut.name}
+                        >
+                          {getShortcutIcon(shortcut.kind)}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -686,14 +837,14 @@ export function Espacios() {
       </div>
  
       <Dialog open={isSpaceModalOpen} onOpenChange={handleSpaceModalChange}>
-        <DialogContent className="w-[min(92vw,760px)] rounded-[32px] border border-[#2b3042] bg-[#0f1219] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] [&>button]:hidden">
+        <DialogContent className="w-[min(92vw,760px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
           <div className="relative overflow-hidden rounded-[32px]">
-            <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#f4bd49_0%,rgba(244,189,73,0.2)_26%,transparent_70%)]" />
-            <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6 sm:px-8">
+            <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,rgba(240,196,92,0.38),rgba(240,196,92,0.08)_35%,transparent_70%)]" />
+            <div className="relative border-b border-[#20283a] px-6 pb-4 pt-6 sm:px-8">
               <DialogTitle className="text-[24px] font-semibold text-white">
                 Nuevo Espacio
               </DialogTitle>
-              <DialogDescription className="mt-2 text-sm text-[#7f879c]">
+              <DialogDescription className="mt-2 text-sm text-[#98a2b7]">
                 Panel visual simple para la presentación.
               </DialogDescription>
             </div>
@@ -706,8 +857,8 @@ export function Espacios() {
                 <div
                   className={`rounded-[20px] border px-5 py-4 transition-colors ${
                     spaceNameError
-                      ? "border-[#de6178] bg-[#28171d]"
-                      : "border-[#2b3042] bg-[#1d2230]"
+                      ? "border-[#de6178] bg-[#2b1a21]"
+                      : "border-[#2b3548] bg-[#141a26]"
                   }`}
                 >
                   <input
@@ -748,8 +899,8 @@ export function Espacios() {
                         onClick={() => setSelectedType(type.id)}
                         className={`flex flex-col items-center justify-center gap-3 rounded-[22px] border px-3 py-5 text-center transition-all ${
                           isSelected
-                            ? "border-[#f4bd49]/70 bg-[#15110a] text-[#f4bd49]"
-                            : "border-[#202636] bg-[#171b26] text-[#aab3c8]"
+                            ? "border-[#d6a339]/60 bg-[#15120b] text-[#f4c95d] shadow-[0_10px_28px_rgba(214,163,57,0.08)]"
+                            : "border-[#2b3548] bg-[#141a26] text-[#cdd4e2] hover:border-[#3f4f6d]"
                         }`}
                       >
                         {getSpaceIcon(type.id, 24, 1.5)}
@@ -768,8 +919,8 @@ export function Espacios() {
                 disabled={!selectedType}
                 className={`w-full rounded-[20px] border-2 py-4 text-[15px] font-medium transition-all ${
                   selectedType
-                    ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
-                    : "border-[#202636] bg-[#202636] text-[#6b7280]"
+                    ? "border-[#d6a339] bg-[#151d2a] text-[#f0c45c] hover:bg-[#1b2434]"
+                    : "border-[#2b3548] bg-[#141a26] text-[#6b7280]"
                 }`}
               >
                 Agregar espacio
@@ -780,7 +931,7 @@ export function Espacios() {
       </Dialog>
  
       <Dialog open={isHomeModalOpen} onOpenChange={handleHomeModalChange}>
-        <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#2b3042] bg-[#0f1219] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] [&>button]:hidden">
+        <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
           <div className="relative overflow-hidden rounded-[32px]">
             <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#f4bd49_0%,rgba(244,189,73,0.2)_26%,transparent_70%)]" />
             <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6 sm:px-8">
@@ -790,228 +941,58 @@ export function Espacios() {
               <DialogDescription className="mt-2 text-sm text-[#7f879c]">
                 Elegí o sumá hogares desde el dropdown principal.
               </DialogDescription>
-
-              <ol className="mt-5 grid grid-cols-2 gap-2">
-                {homeSteps.map((step, index) => {
-                  const isCurrentStep = index === homeStep;
-                  const isCompletedStep = index < homeStep;
-
-                  return (
-                    <li key={step.id} className="relative">
-                      {index < homeSteps.length - 1 ? (
-                        <span
-                          className={`absolute left-1/2 right-[-50%] top-5 h-[2px] ${
-                            isCompletedStep ? "bg-[#d6a339]" : "bg-[#2a3346]"
-                          }`}
-                        />
-                      ) : null}
-                      <div className="relative z-10 flex flex-col items-center gap-2 text-center">
-                        <div
-                          className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold transition-colors ${
-                            isCompletedStep
-                              ? "border-[#d6a339] bg-[#d6a339] text-[#10151f]"
-                              : isCurrentStep
-                                ? "border-[#d6a339] bg-[#151d2a] text-[#f0c45c]"
-                                : "border-[#2b3548] bg-[#10151f] text-[#7f8aa3]"
-                          }`}
-                        >
-                          {isCompletedStep ? <Check size={16} /> : index + 1}
-                        </div>
-                        <p
-                          className={`text-[13px] font-medium ${
-                            isCurrentStep || isCompletedStep ? "text-white" : "text-[#8b96ab]"
-                          }`}
-                        >
-                          {step.label}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
             </div>
  
             <div className="relative space-y-6 px-6 pb-8 pt-6 sm:px-8">
-              {homeStep === 0 ? (
-                <>
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                      Nombre
-                    </label>
-                    <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-5 py-4">
-                      <input
-                        type="text"
-                        value={newHomeName}
-                        onChange={(event) => setNewHomeName(event.target.value)}
-                        placeholder="Casa de fin de semana"
-                        className="w-full bg-transparent text-base text-white outline-none placeholder:text-[#6b7280]"
-                      />
-                    </div>
-                  </div>
+              <div className="space-y-3">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
+                  Nombre
+                </label>
+                <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-5 py-4">
+                  <input
+                    type="text"
+                    value={newHomeName}
+                    onChange={(event) => setNewHomeName(event.target.value)}
+                    placeholder="Casa de fin de semana"
+                    className="w-full bg-transparent text-base text-white outline-none placeholder:text-[#6b7280]"
+                  />
+                </div>
+              </div>
 
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                      Ubicación
-                    </label>
-                    <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-5 py-4">
-                      <input
-                        type="text"
-                        value={newHomeLocation}
-                        onChange={(event) => setNewHomeLocation(event.target.value)}
-                        placeholder="Ciudad o referencia"
-                        className="w-full bg-transparent text-base text-white outline-none placeholder:text-[#6b7280]"
-                      />
-                    </div>
-                  </div>
+              <div className="space-y-3">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
+                  Ubicación
+                </label>
+                <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-5 py-4">
+                  <input
+                    type="text"
+                    value={newHomeLocation}
+                    onChange={(event) => setNewHomeLocation(event.target.value)}
+                    placeholder="Ciudad o referencia"
+                    className="w-full bg-transparent text-base text-white outline-none placeholder:text-[#6b7280]"
+                  />
+                </div>
+              </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setHomeStep(1)}
-                    disabled={!newHomeName.trim()}
-                    className={`w-full rounded-[20px] border-2 py-4 text-[15px] font-medium transition-all ${
-                      newHomeName.trim()
-                        ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
-                        : "border-[#202636] bg-[#202636] text-[#6b7280]"
-                    }`}
-                  >
-                    Continuar
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                      Shortcuts
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {newHomeShortcuts.map((shortcut) => {
-                        const shortcutMeta = homeShortcuts.find((item) => item.id === shortcut.kind);
-
-                        return (
-                          <div
-                            key={shortcut.id}
-                            className="relative rounded-[18px] border border-[#252e3f] bg-[#121722] px-3 py-4"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => removeShortcutFromHome(shortcut.id)}
-                              className="absolute right-2 top-2 rounded-full border border-[#2b3548] bg-[#141a26] px-2 py-0.5 text-[10px] text-[#aeb6c8] transition-colors hover:border-[#5a6b8f] hover:text-white"
-                            >
-                              x
-                            </button>
-                            <div className="flex flex-col items-center justify-center gap-2 pt-2 text-center">
-                              <div className="text-[#f4bd49]">{shortcutMeta?.icon}</div>
-                              <span className="text-[13px] font-medium leading-tight text-white">{shortcut.name}</span>
-                              <span className="text-[11px] text-[#8f97ab]">{shortcutMeta?.label}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsShortcutComposerOpen(true);
-                          setDraftShortcutKind(null);
-                          setDraftShortcutName("");
-                        }}
-                        className="flex min-h-[134px] flex-col items-center justify-center rounded-[18px] border border-dashed border-[#3b465d] bg-[#101620]/70 p-4 text-center transition-all hover:border-[#566582]"
-                      >
-                        <div className="flex h-12 w-12 items-center justify-center rounded-[16px] border border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]">
-                          <Plus size={20} />
-                        </div>
-                        <p className="mt-3 text-[13px] font-medium text-white">Agregar shortcut</p>
-                      </button>
-                    </div>
-
-                    {isShortcutComposerOpen ? (
-                      <div className="rounded-[20px] border border-[#2b3042] bg-[#111723] p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                          Nuevo shortcut
-                        </p>
-
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          {homeShortcuts.map((shortcut) => {
-                            const isSelected = draftShortcutKind === shortcut.id;
-
-                            return (
-                              <button
-                                key={shortcut.id}
-                                type="button"
-                                onClick={() => setDraftShortcutKind(shortcut.id)}
-                                className={`flex items-center gap-2 rounded-[14px] border px-3 py-2 text-left text-sm transition-all ${
-                                  isSelected
-                                    ? "border-[#f4bd49]/70 bg-[#15110a] text-[#f4bd49]"
-                                    : "border-[#202636] bg-[#171b26] text-[#aab3c8]"
-                                }`}
-                              >
-                                {shortcut.icon}
-                                {shortcut.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <div className="mt-3 rounded-[16px] border border-[#2b3042] bg-[#1d2230] px-4 py-3">
-                          <input
-                            type="text"
-                            value={draftShortcutName}
-                            onChange={(event) => setDraftShortcutName(event.target.value)}
-                            placeholder="Nombre del dispositivo"
-                            className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#6b7280]"
-                          />
-                        </div>
-
-                        <div className="mt-3 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setIsShortcutComposerOpen(false)}
-                            className="w-full rounded-[14px] border border-[#2b3042] bg-[#151a25] py-2 text-sm text-[#d2d8e6] transition-colors hover:border-[#5a6b8f]"
-                          >
-                            Cancelar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={addShortcutToHome}
-                            disabled={!draftShortcutKind || !draftShortcutName.trim()}
-                            className={`w-full rounded-[14px] border py-2 text-sm font-medium transition-colors ${
-                              draftShortcutKind && draftShortcutName.trim()
-                                ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
-                                : "border-[#202636] bg-[#202636] text-[#6b7280]"
-                            }`}
-                          >
-                            Agregar
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setHomeStep(0)}
-                      className="w-full rounded-[20px] border border-[#2b3042] bg-[#151a25] py-4 text-[15px] font-medium text-[#d2d8e6] transition-colors hover:border-[#5a6b8f]"
-                    >
-                      Atrás
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleAddHome}
-                      className="w-full rounded-[20px] border-2 border-[#f4bd49] bg-[#15110a] py-4 text-[15px] font-medium text-[#f4bd49] transition-all"
-                    >
-                      Agregar hogar
-                    </button>
-                  </div>
-                </>
-              )}
+              <button
+                type="button"
+                onClick={handleAddHome}
+                disabled={!newHomeName.trim()}
+                className={`w-full rounded-[20px] border-2 py-4 text-[15px] font-medium transition-all ${
+                  newHomeName.trim()
+                    ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
+                    : "border-[#202636] bg-[#202636] text-[#6b7280]"
+                }`}
+              >
+                Agregar hogar
+              </button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
       <Dialog open={isEditHomeModalOpen} onOpenChange={handleEditHomeModalChange}>
-        <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#2b3042] bg-[#0f1219] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] [&>button]:hidden">
+        <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
           <div className="relative overflow-hidden rounded-[32px]">
             <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#f4bd49_0%,rgba(244,189,73,0.2)_26%,transparent_70%)]" />
             <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6 sm:px-8">
@@ -1019,228 +1000,53 @@ export function Espacios() {
                 Editar hogar
               </DialogTitle>
               <DialogDescription className="mt-2 text-sm text-[#7f879c]">
-                Actualizá el nombre y la ubicación del hogar seleccionado.
+                Actualizá la configuración de tu hogar 
               </DialogDescription>
-
-              <ol className="mt-5 grid grid-cols-2 gap-2">
-                {homeSteps.map((step, index) => {
-                  const isCurrentStep = index === editHomeStep;
-                  const isCompletedStep = index < editHomeStep;
-
-                  return (
-                    <li key={`edit-${step.id}`} className="relative">
-                      {index < homeSteps.length - 1 ? (
-                        <span
-                          className={`absolute left-1/2 right-[-50%] top-5 h-[2px] ${
-                            isCompletedStep ? "bg-[#d6a339]" : "bg-[#2a3346]"
-                          }`}
-                        />
-                      ) : null}
-                      <div className="relative z-10 flex flex-col items-center gap-2 text-center">
-                        <div
-                          className={`flex h-9 w-9 items-center justify-center rounded-full border text-sm font-semibold transition-colors ${
-                            isCompletedStep
-                              ? "border-[#d6a339] bg-[#d6a339] text-[#10151f]"
-                              : isCurrentStep
-                                ? "border-[#d6a339] bg-[#151d2a] text-[#f0c45c]"
-                                : "border-[#2b3548] bg-[#10151f] text-[#7f8aa3]"
-                          }`}
-                        >
-                          {isCompletedStep ? <Check size={16} /> : index + 1}
-                        </div>
-                        <p
-                          className={`text-[13px] font-medium ${
-                            isCurrentStep || isCompletedStep ? "text-white" : "text-[#8b96ab]"
-                          }`}
-                        >
-                          {step.label}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ol>
             </div>
 
             <div className="relative space-y-6 px-6 pb-8 pt-6 sm:px-8">
-              {editHomeStep === 0 ? (
-                <>
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                      Nombre
-                    </label>
-                    <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-5 py-4">
-                      <input
-                        type="text"
-                        value={editHomeName}
-                        onChange={(event) => setEditHomeName(event.target.value)}
-                        placeholder="Mi hogar"
-                        className="w-full bg-transparent text-base text-white outline-none placeholder:text-[#6b7280]"
-                      />
-                    </div>
-                  </div>
+              <div className="space-y-3">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
+                  Nombre
+                </label>
+                <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-5 py-4">
+                  <input
+                    type="text"
+                    value={editHomeName}
+                    onChange={(event) => setEditHomeName(event.target.value)}
+                    placeholder="Mi hogar"
+                    className="w-full bg-transparent text-base text-white outline-none placeholder:text-[#6b7280]"
+                  />
+                </div>
+              </div>
 
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                      Ubicación
-                    </label>
-                    <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-5 py-4">
-                      <input
-                        type="text"
-                        value={editHomeLocation}
-                        onChange={(event) => setEditHomeLocation(event.target.value)}
-                        placeholder="Ciudad o referencia"
-                        className="w-full bg-transparent text-base text-white outline-none placeholder:text-[#6b7280]"
-                      />
-                    </div>
-                  </div>
+              <div className="space-y-3">
+                <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
+                  Ubicación
+                </label>
+                <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-5 py-4">
+                  <input
+                    type="text"
+                    value={editHomeLocation}
+                    onChange={(event) => setEditHomeLocation(event.target.value)}
+                    placeholder="Ciudad o referencia"
+                    className="w-full bg-transparent text-base text-white outline-none placeholder:text-[#6b7280]"
+                  />
+                </div>
+              </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setEditHomeStep(1)}
-                    disabled={!editHomeName.trim()}
-                    className={`w-full rounded-[20px] border-2 py-4 text-[15px] font-medium transition-all ${
-                      editHomeName.trim()
-                        ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
-                        : "border-[#202636] bg-[#202636] text-[#6b7280]"
-                    }`}
-                  >
-                    Continuar
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="space-y-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                      Shortcuts
-                    </label>
-                    <div className="grid grid-cols-2 gap-3">
-                      {editHomeShortcuts.map((shortcut) => {
-                        const shortcutMeta = homeShortcuts.find((item) => item.id === shortcut.kind);
-
-                        return (
-                          <div
-                            key={shortcut.id}
-                            className="relative rounded-[18px] border border-[#252e3f] bg-[#121722] px-3 py-4"
-                          >
-                            <button
-                              type="button"
-                              onClick={() => removeShortcutFromEditHome(shortcut.id)}
-                              className="absolute right-2 top-2 rounded-full border border-[#2b3548] bg-[#141a26] px-2 py-0.5 text-[10px] text-[#aeb6c8] transition-colors hover:border-[#5a6b8f] hover:text-white"
-                            >
-                              x
-                            </button>
-                            <div className="flex flex-col items-center justify-center gap-2 pt-2 text-center">
-                              <div className="text-[#f4bd49]">{shortcutMeta?.icon}</div>
-                              <span className="text-[13px] font-medium leading-tight text-white">{shortcut.name}</span>
-                              <span className="text-[11px] text-[#8f97ab]">{shortcutMeta?.label}</span>
-                            </div>
-                          </div>
-                        );
-                      })}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsEditShortcutComposerOpen(true);
-                          setDraftEditShortcutKind(null);
-                          setDraftEditShortcutName("");
-                        }}
-                        className="flex min-h-[134px] flex-col items-center justify-center rounded-[18px] border border-dashed border-[#3b465d] bg-[#101620]/70 p-4 text-center transition-all hover:border-[#566582]"
-                      >
-                        <div className="flex h-12 w-12 items-center justify-center rounded-[16px] border border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]">
-                          <Plus size={20} />
-                        </div>
-                        <p className="mt-3 text-[13px] font-medium text-white">Agregar shortcut</p>
-                      </button>
-                    </div>
-
-                    {isEditShortcutComposerOpen ? (
-                      <div className="rounded-[20px] border border-[#2b3042] bg-[#111723] p-4">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                          Nuevo shortcut
-                        </p>
-
-                        <div className="mt-3 grid grid-cols-2 gap-2">
-                          {homeShortcuts.map((shortcut) => {
-                            const isSelected = draftEditShortcutKind === shortcut.id;
-
-                            return (
-                              <button
-                                key={shortcut.id}
-                                type="button"
-                                onClick={() => setDraftEditShortcutKind(shortcut.id)}
-                                className={`flex items-center gap-2 rounded-[14px] border px-3 py-2 text-left text-sm transition-all ${
-                                  isSelected
-                                    ? "border-[#f4bd49]/70 bg-[#15110a] text-[#f4bd49]"
-                                    : "border-[#202636] bg-[#171b26] text-[#aab3c8]"
-                                }`}
-                              >
-                                {shortcut.icon}
-                                {shortcut.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        <div className="mt-3 rounded-[16px] border border-[#2b3042] bg-[#1d2230] px-4 py-3">
-                          <input
-                            type="text"
-                            value={draftEditShortcutName}
-                            onChange={(event) => setDraftEditShortcutName(event.target.value)}
-                            placeholder="Nombre del dispositivo"
-                            className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#6b7280]"
-                          />
-                        </div>
-
-                        <div className="mt-3 flex gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setIsEditShortcutComposerOpen(false)}
-                            className="w-full rounded-[14px] border border-[#2b3042] bg-[#151a25] py-2 text-sm text-[#d2d8e6] transition-colors hover:border-[#5a6b8f]"
-                          >
-                            Cancelar
-                          </button>
-                          <button
-                            type="button"
-                            onClick={addShortcutToEditHome}
-                            disabled={!draftEditShortcutKind || !draftEditShortcutName.trim()}
-                            className={`w-full rounded-[14px] border py-2 text-sm font-medium transition-colors ${
-                              draftEditShortcutKind && draftEditShortcutName.trim()
-                                ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
-                                : "border-[#202636] bg-[#202636] text-[#6b7280]"
-                            }`}
-                          >
-                            Agregar
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setEditHomeStep(0)}
-                      className="w-full rounded-[20px] border border-[#2b3042] bg-[#151a25] py-4 text-[15px] font-medium text-[#d2d8e6] transition-colors hover:border-[#5a6b8f]"
-                    >
-                      Atrás
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleEditHome}
-                      disabled={!editHomeName.trim()}
-                      className={`w-full rounded-[20px] border-2 py-4 text-[15px] font-medium transition-all ${
-                        editHomeName.trim()
-                          ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
-                          : "border-[#202636] bg-[#202636] text-[#6b7280]"
-                      }`}
-                    >
-                      Guardar cambios
-                    </button>
-                  </div>
-                </>
-              )}
+              <button
+                type="button"
+                onClick={handleEditHome}
+                disabled={!editHomeName.trim()}
+                className={`w-full rounded-[20px] border-2 py-4 text-[15px] font-medium transition-all ${
+                  editHomeName.trim()
+                    ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
+                    : "border-[#202636] bg-[#202636] text-[#6b7280]"
+                }`}
+              >
+                Guardar cambios
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -1252,7 +1058,7 @@ export function Espacios() {
           if (!open) setActiveShortcut(null);
         }}
       >
-        <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#2b3042] bg-[#0f1219] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] [&>button]:hidden">
+        <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
           <div className="relative overflow-hidden rounded-[32px]">
             <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#f4bd49_0%,rgba(244,189,73,0.2)_26%,transparent_70%)]" />
             <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6 sm:px-8">
@@ -1458,7 +1264,7 @@ export function Espacios() {
           if (!open) setActiveDoorShortcut(null);
         }}
       >
-        <DialogContent className="w-[min(92vw,460px)] rounded-[32px] border border-[#2b3042] bg-[#0f1219] p-0 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)] [&>button]:hidden">
+        <DialogContent className="w-[min(92vw,460px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
           <div className="relative overflow-hidden rounded-[32px]">
             <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,#f4bd49_0%,rgba(244,189,73,0.2)_26%,transparent_70%)]" />
             <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6">
@@ -1515,36 +1321,420 @@ export function Espacios() {
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={isAlarmConfirmOpen} onOpenChange={setIsAlarmConfirmOpen}>
-        <AlertDialogContent className="max-w-[460px] rounded-[28px] border border-[#2b3042] bg-[#0f1219] p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-          <AlertDialogHeader className="text-left">
-            <AlertDialogTitle className="text-[24px] text-white">
-              {isHomeAlarmOn ? "¿Desactivar la alarma?" : "¿Activar la alarma?"}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-[15px] leading-6 text-[#98a2b7]">
-              {isHomeAlarmOn
-                ? "El sistema de seguridad dejará de monitorear tu hogar."
-                : "El sistema de seguridad de tu hogar quedará encendido."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
+      <Dialog open={isAlarmsModalOpen} onOpenChange={setIsAlarmsModalOpen}>
+        <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
+          <div className="space-y-6 px-6 pb-8 pt-6 sm:px-8">
+            <div className="border-b border-[#1f2432] pb-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[24px] font-semibold text-white">Alarmas</h2>
+                  <p className="mt-2 text-sm text-[#7f879c]">Administrá tus sistemas de seguridad</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsAlarmsModalOpen(false)}
+                  aria-label="Cerrar"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
 
-          <AlertDialogFooter className="mt-2">
-            <AlertDialogCancel className="rounded-[18px] border border-[#2b3548] bg-[#141a26] text-[#d0d6e3] hover:bg-[#192131] hover:text-white">
-              Cancelar
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => setIsHomeAlarmOn((prev) => !prev)}
-              className={`rounded-[18px] border ${
-                isHomeAlarmOn
-                  ? "border-[#8f3949] bg-[#2a141a] text-[#ffb4c0] hover:bg-[#341820]"
-                  : "border-[#f4bd49] bg-[#15110a] text-[#f4bd49] hover:bg-[#1b1408]"
-              }`}
-            >
-              {isHomeAlarmOn ? "Desactivar" : "Activar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            {(currentHome.alarms ?? []).length > 0 ? (
+              <div className="space-y-3">
+                {(currentHome.alarms ?? []).map((alarm) => (
+                  (() => {
+                    const alarmIsActive = isAlarmActive(alarm);
+
+                    return (
+                  <div
+                    key={alarm.id}
+                    className="flex cursor-pointer items-center justify-between rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4 transition-colors hover:border-[#44506a]"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openAlarmOptionsPopup(alarm)}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        openAlarmOptionsPopup(alarm);
+                      }
+                    }}
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border border-[#252d3f] bg-[#161c28] ${
+                          alarmIsActive ? "text-[#f4bd49]" : "text-[#717a8f]"
+                        }`}
+                      >
+                        <Bell size={20} />
+                      </div>
+                      <div>
+                        <p className="font-medium text-white">{alarm.name}</p>
+                        <p className="text-sm text-[#8f97ab]">{alarmIsActive ? "Activada" : "Desactivada"}</p>
+                      </div>
+                    </div>
+                  </div>
+                    );
+                  })()
+                ))}
+              </div>
+            ) : (
+              <p className="py-4 text-center text-[#8f97ab]">No hay alarmas agregadas aún</p>
+            )}
+
+            <div className="flex justify-center pt-4">
+              <button
+                type="button"
+                onClick={() => setIsCreateAlarmModalOpen(true)}
+                className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-[#f4bd49] bg-transparent text-[#f4bd49] transition-colors hover:border-[#efb32e] hover:text-[#efb32e]"
+                aria-label="Agregar nueva alarma"
+              >
+                <Plus size={24} />
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateAlarmModalOpen} onOpenChange={setIsCreateAlarmModalOpen}>
+        <DialogContent className="w-[min(92vw,460px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
+          <div className="space-y-4 px-6 pb-8 pt-6 sm:px-8">
+            <div>
+              <h2 className="text-[30px] font-semibold text-white">Nueva alarma</h2>
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
+                <input
+                  type="text"
+                  value={draftAlarmName}
+                  onChange={(event) => setDraftAlarmName(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" && draftAlarmName.trim()) {
+                      addAlarm(currentHome.id, draftAlarmName.trim());
+                      setDraftAlarmName("");
+                      setIsCreateAlarmModalOpen(false);
+                    }
+                  }}
+                  placeholder="Ej: Sistema Central"
+                  className="w-full bg-transparent text-base text-white outline-none placeholder:text-[#6b7280]"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setDraftAlarmName("");
+                  setIsCreateAlarmModalOpen(false);
+                }}
+                className="flex-1 rounded-[18px] border border-[#2b3548] bg-[#141a26] px-4 py-3 text-[15px] font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (draftAlarmName.trim()) {
+                    addAlarm(currentHome.id, draftAlarmName.trim());
+                    setDraftAlarmName("");
+                    setIsCreateAlarmModalOpen(false);
+                  }
+                }}
+                disabled={!draftAlarmName.trim()}
+                className="flex-1 rounded-[18px] border border-[#f4bd49] bg-[#15110a] px-4 py-3 text-[15px] font-medium text-[#f4bd49] transition-colors hover:bg-[#1b1408] disabled:border-[#3d3d3d] disabled:bg-[#1a1a1a] disabled:text-[#666666]"
+              >
+                Crear alarma
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isAlarmOptionsModalOpen}
+        onOpenChange={(open) => {
+          setIsAlarmOptionsModalOpen(open);
+          if (!open) setActiveAlarm(null);
+        }}
+      >
+        <DialogContent className="w-[min(92vw,500px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
+          <div className="space-y-5 px-6 pb-8 pt-6 sm:px-8">
+            <div className="border-b border-[#1f2432] pb-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[24px] font-semibold text-white">{activeAlarm?.name ?? "Alarma"}</h2>
+                  <p className="mt-2 text-sm text-[#7f879c]">Configuración de alarma</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAlarmOptionsModalOpen(false);
+                    setActiveAlarm(null);
+                  }}
+                  aria-label="Cerrar"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
+                <span className="text-[15px] font-medium text-white">Modo Casa</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!activeAlarm) return;
+                    openSecurityCodeModal(activeAlarm.id, "house");
+                  }}
+                  className={`rounded-[16px] border px-4 py-2 text-[13px] font-medium transition-colors ${
+                    (activeAlarm && (alarmOptionsById[activeAlarm.id] ?? getDefaultAlarmOptions()).houseModeOn)
+                      ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
+                      : "border-[#2b3548] bg-[#141a26] text-[#d0d6e3]"
+                  }`}
+                >
+                  {(activeAlarm && (alarmOptionsById[activeAlarm.id] ?? getDefaultAlarmOptions()).houseModeOn)
+                    ? "Desativar"
+                    : "Activar"}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
+                <span className="text-[15px] font-medium text-white">Modo Regular</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!activeAlarm) return;
+                    openSecurityCodeModal(activeAlarm.id, "regular");
+                  }}
+                  className={`rounded-[16px] border px-4 py-2 text-[13px] font-medium transition-colors ${
+                    (activeAlarm && (alarmOptionsById[activeAlarm.id] ?? getDefaultAlarmOptions()).regularModeOn)
+                      ? "border-[#f4bd49] bg-[#15110a] text-[#f4bd49]"
+                      : "border-[#2b3548] bg-[#141a26] text-[#d0d6e3]"
+                  }`}
+                >
+                  {(activeAlarm && (alarmOptionsById[activeAlarm.id] ?? getDefaultAlarmOptions()).regularModeOn)
+                    ? "Desativar"
+                    : "Activar"}
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
+                <span className="text-[15px] font-medium text-white">Cambiar Codigo de Seguridad</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!activeAlarm) return;
+                    openChangeSecurityCodeModal(activeAlarm.id);
+                  }}
+                  className="rounded-[16px] border border-[#2b3548] bg-[#141a26] px-4 py-2 text-[13px] font-medium text-[#d0d6e3] transition-colors hover:border-[#5a6b8f] hover:text-white"
+                >
+                  Cambiar
+                </button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isSecurityCodeModalOpen}
+        onOpenChange={(open) => {
+          setIsSecurityCodeModalOpen(open);
+          if (!open) {
+            setPendingAlarmModeChange(null);
+            setSecurityCodeInput("");
+            setSecurityCodeError("");
+          }
+        }}
+      >
+        <DialogContent className="w-[min(92vw,460px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
+          <div className="space-y-5 px-6 pb-8 pt-6 sm:px-8">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <DialogTitle className="text-[24px] font-semibold text-white">Código de seguridad</DialogTitle>
+                <DialogDescription className="mt-2 text-sm text-[#7f879c]">
+                  Ingresá el código de 4 dígitos para confirmar la acción.
+                </DialogDescription>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSecurityCodeModalOpen(false);
+                  setPendingAlarmModeChange(null);
+                  setSecurityCodeInput("");
+                  setSecurityCodeError("");
+                }}
+                aria-label="Cerrar"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={securityCodeInput}
+                  onChange={(event) => {
+                    const digitsOnly = event.target.value.replace(/\D/g, "").slice(0, 4);
+                    setSecurityCodeInput(digitsOnly);
+                    if (securityCodeError) setSecurityCodeError("");
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      confirmSecurityCodeAndToggleMode();
+                    }
+                  }}
+                  placeholder="••••"
+                  className="w-full bg-transparent text-base tracking-[0.25em] text-white outline-none placeholder:text-[#6b7280]"
+                  autoFocus
+                />
+              </div>
+              {securityCodeError ? (
+                <p className="text-sm text-[#ff9cab]">{securityCodeError}</p>
+              ) : null}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSecurityCodeModalOpen(false);
+                  setPendingAlarmModeChange(null);
+                  setSecurityCodeInput("");
+                  setSecurityCodeError("");
+                }}
+                className="w-full rounded-[18px] border border-[#2b3548] bg-[#141a26] py-3 text-[15px] font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmSecurityCodeAndToggleMode}
+                className="w-full rounded-[18px] border border-[#f4bd49] bg-[#15110a] py-3 text-[15px] font-medium text-[#f4bd49] transition-colors hover:bg-[#1b1408]"
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={isChangeSecurityCodeModalOpen}
+        onOpenChange={(open) => {
+          setIsChangeSecurityCodeModalOpen(open);
+          if (!open) {
+            setChangeSecurityCodeAlarmId(null);
+            setChangeSecurityCodeOld("");
+            setChangeSecurityCodeNew("");
+            setChangeSecurityCodeError("");
+          }
+        }}
+      >
+        <DialogContent className="w-[min(92vw,460px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
+          <div className="space-y-5 px-6 pb-8 pt-6 sm:px-8">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <DialogTitle className="text-[24px] font-semibold text-white">Cambiar código de seguridad</DialogTitle>
+                <DialogDescription className="mt-2 text-sm text-[#7f879c]">
+                  Ingresá el código actual y el nuevo código de 4 dígitos.
+                </DialogDescription>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsChangeSecurityCodeModalOpen(false);
+                  setChangeSecurityCodeAlarmId(null);
+                  setChangeSecurityCodeOld("");
+                  setChangeSecurityCodeNew("");
+                  setChangeSecurityCodeError("");
+                }}
+                aria-label="Cerrar"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={changeSecurityCodeOld}
+                  onChange={(event) => {
+                    const digitsOnly = event.target.value.replace(/\D/g, "").slice(0, 4);
+                    setChangeSecurityCodeOld(digitsOnly);
+                    if (changeSecurityCodeError) setChangeSecurityCodeError("");
+                  }}
+                  placeholder="Código actual ••••"
+                  className="w-full bg-transparent text-base tracking-[0.25em] text-white outline-none placeholder:text-[#6b7280]"
+                  autoFocus
+                />
+              </div>
+
+              <div className="rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  maxLength={4}
+                  value={changeSecurityCodeNew}
+                  onChange={(event) => {
+                    const digitsOnly = event.target.value.replace(/\D/g, "").slice(0, 4);
+                    setChangeSecurityCodeNew(digitsOnly);
+                    if (changeSecurityCodeError) setChangeSecurityCodeError("");
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      confirmChangeSecurityCode();
+                    }
+                  }}
+                  placeholder="Nuevo código ••••"
+                  className="w-full bg-transparent text-base tracking-[0.25em] text-white outline-none placeholder:text-[#6b7280]"
+                />
+              </div>
+
+              {changeSecurityCodeError ? (
+                <p className="text-sm text-[#ff9cab]">{changeSecurityCodeError}</p>
+              ) : null}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsChangeSecurityCodeModalOpen(false);
+                  setChangeSecurityCodeAlarmId(null);
+                  setChangeSecurityCodeOld("");
+                  setChangeSecurityCodeNew("");
+                  setChangeSecurityCodeError("");
+                }}
+                className="w-full rounded-[18px] border border-[#2b3548] bg-[#141a26] py-3 text-[15px] font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmChangeSecurityCode}
+                className="w-full rounded-[18px] border border-[#f4bd49] bg-[#15110a] py-3 text-[15px] font-medium text-[#f4bd49] transition-colors hover:bg-[#1b1408]"
+              >
+                Cambiar
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

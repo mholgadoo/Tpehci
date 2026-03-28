@@ -4,6 +4,7 @@ import { Espacios } from "./components/Espacios";
 import { Ajustes } from "./components/Ajustes";
 import { Escenas } from "./components/Escenas";
 import { SpaceDetail } from "./components/SpaceDetail";
+import { Shortcuts } from "./components/Shortcuts";
 
 export const router = createBrowserRouter([
   {
@@ -15,6 +16,7 @@ export const router = createBrowserRouter([
       { path: "espacio/:spaceId", Component: SpaceDetail },
       { path: "ajustes", Component: Ajustes },
       { path: "escenas", Component: Escenas },
+      { path: "shortcuts", Component: Shortcuts },
     ],
   },
 ]);
