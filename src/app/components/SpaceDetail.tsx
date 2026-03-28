@@ -337,34 +337,28 @@ export function SpaceDetail() {
                         <span>Intensidad</span>
                         <span>{selectedDevice.brightness ?? 0}%</span>
                       </div>
-                      {isOn ? (
-                        <div className="relative h-[6px] rounded-full bg-[#273246]">
-                          <div
-                            className="absolute left-0 top-0 h-full rounded-full bg-[#f0c45c]"
-                            style={{ width: `${selectedDevice.brightness ?? 0}%` }}
-                          />
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={selectedDevice.brightness ?? 0}
-                            onChange={(event) => {
-                              if (!home || !space) return;
-                              updateBrightness(
-                                home.id,
-                                space.id,
-                                selectedDevice.id,
-                                parseInt(event.target.value, 10),
-                              );
-                            }}
-                            className="absolute inset-0 h-[6px] w-full cursor-pointer opacity-0"
-                          />
-                        </div>
-                      ) : (
-                        <p className="text-sm text-[#98a2b7]">
-                          Encendé la luz para ajustar la intensidad.
-                        </p>
-                      )}
+                      <div className="relative h-[6px] rounded-full bg-[#273246]">
+                        <div
+                          className="absolute left-0 top-0 h-full rounded-full bg-[#f0c45c]"
+                          style={{ width: `${selectedDevice.brightness ?? 0}%` }}
+                        />
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={selectedDevice.brightness ?? 0}
+                          onChange={(event) => {
+                            if (!home || !space) return;
+                            updateBrightness(
+                              home.id,
+                              space.id,
+                              selectedDevice.id,
+                              parseInt(event.target.value, 10),
+                            );
+                          }}
+                          className="absolute inset-0 h-[6px] w-full cursor-pointer opacity-0"
+                        />
+                      </div>
                     </div>
                   ) : null}
                 </div>

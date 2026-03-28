@@ -122,21 +122,15 @@ export function Root() {
     <div className="flex min-h-screen bg-[#000000] text-white">
       <nav className="sticky top-0 z-20 flex h-screen w-[292px] shrink-0 self-start flex-col overflow-y-auto border-r border-[#1f2432] bg-[#07090e]">
         <div className="border-b border-[#1f2432] px-6 pb-6 pt-7">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
+          <p className="text-[15px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
             Mi hogar
           </p>
-          <h1 className="mt-3 text-[30px] font-semibold text-white">
-            Panel principal
+          <h1 className="mt-3 text-[35px] font-semibold text-white">
+            Panel Principal
           </h1>
-          <p className="mt-2 text-sm text-[#8f97ab]">
-            Accesos principales primero. El resto queda un paso mas abajo.
-          </p>
         </div>
 
         <div className="flex-1 px-4 py-6">
-          <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-            Principal
-          </p>
           <div className="mt-3 space-y-2">
             {primaryNavItems.map(({ path, label, icon: Icon }) => {
               const active = isActive(path);
@@ -163,7 +157,7 @@ export function Root() {
                   <div>
                     <p className="text-[16px] font-medium">{label}</p>
                     <p className="text-sm text-[#8f97ab]">
-                      {path === "/" ? "Espacios y dispositivos" : "Rutinas y automatizaciones"}
+                      {path === "/" ? "Espacios y dispositivos" : "Automatizaciones"}
                     </p>
                   </div>
                 </Link>
@@ -173,9 +167,7 @@ export function Root() {
         </div>
 
         <div className="border-t border-[#1f2432] px-4 py-5">
-          <p className="px-3 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-            Secundario
-          </p>
+          
           <div className="mt-3 space-y-3">
             <Link
               to={secondaryNavItem.path}
@@ -226,13 +218,7 @@ export function Root() {
                   <User size={16} />
                   Ver perfil
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => navigate("/ajustes")}
-                  className="rounded-[16px] px-3 py-3 text-[#d5dbea] focus:bg-[#1b2232] focus:text-white"
-                >
-                  <Settings size={16} />
-                  Preferencias
-                </DropdownMenuItem>
+                
 
                 <DropdownMenuSeparator className="mx-1 my-2 bg-[#232a3a]" />
 

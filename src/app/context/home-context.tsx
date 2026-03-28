@@ -79,7 +79,16 @@ export interface Home {
   id: string;
   name: string;
   subtitle: string;
+  shortcuts?: HomeShortcut[];
   spaces: Space[];
+}
+
+export type HomeShortcutKind = "alarm" | "speaker" | "air" | "blind" | "door";
+
+export interface HomeShortcut {
+  id: string;
+  kind: HomeShortcutKind;
+  name: string;
 }
  
 interface DeviceOption {
@@ -182,14 +191,14 @@ export const spaceTypeOptions: SpaceOption[] = [
 ];
  
 export const allowedDevicesBySpace: Record<SpaceKind, DeviceKind[]> = {
-  cocina: ["lamp", "oven", "fridge", "alarm", "air"],
-  sala: ["lamp", "speaker", "blind", "alarm"],
-  dormitorio: ["lamp", "speaker", "blind", "air", "alarm"],
-  bano: ["lamp", "air", "alarm"],
-  oficina: ["lamp", "speaker", "blind", "air", "alarm"],
-  garaje: ["lamp", "door", "alarm", "vacuum"],
-  jardin: ["sprinkler", "lamp", "alarm"],
-  terraza: ["lamp", "speaker", "blind"],
+  cocina: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
+  sala: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
+  dormitorio: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
+  bano: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
+  oficina: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
+  garaje: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
+  jardin: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
+  terraza: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
 };
  
 export const createDevice = (
@@ -235,7 +244,6 @@ const initialHomes: Home[] = [
           createDevice("luz-ambiente", "Luz Ambiente", "lamp", "on", 50),
           createDevice("parlante", "Parlante", "speaker", "off"),
           createDevice("persiana", "Persiana Principal", "blind", "off"),
-          createDevice("alarma", "Alarma Principal", "alarm", "on"),
         ],
       },
       {
@@ -257,7 +265,6 @@ const initialHomes: Home[] = [
           createDevice("luz-cocina", "Luz de Cocina", "lamp", "on", 100),
           createDevice("horno", "Horno Eléctrico", "oven", "off"),
           createDevice("heladera", "Heladera", "fridge", "on"),
-          createDevice("alarma-cocina", "Alarma humo", "alarm", "on"),
           createDevice("luz-bajo-mueble", "Luz Bajo Mueble", "lamp", "off"),
         ],
       },
@@ -287,7 +294,6 @@ const initialHomes: Home[] = [
         devices: [
           createDevice("luz-garaje", "Luz de Garaje", "lamp", "off"),
           createDevice("puerta-garaje", "Puerta automática", "door", "on"),
-          createDevice("alarma-garaje", "Alarma de acceso", "alarm", "on"),
         ],
       },
       {
@@ -297,7 +303,6 @@ const initialHomes: Home[] = [
         devices: [
           createDevice("aspersor", "Aspersor central", "sprinkler", "off"),
           createDevice("luz-jardin", "Luz de Jardín", "lamp", "on", 70),
-          createDevice("alarma-jardin", "Alarma perimetral", "alarm", "on"),
         ],
       },
       {
@@ -380,7 +385,8 @@ interface HomeContextValue {
   selectedHomeId: string;
   setSelectedHomeId: (homeId: string) => void;
   currentHome: Home;
-  addHome: (name: string, subtitle: string) => Home;
+  addHome: (name: string, subtitle: string, shortcuts: HomeShortcut[]) => Home;
+  updateHome: (homeId: string, name: string, subtitle: string, shortcuts: HomeShortcut[]) => void;
   addSpace: (homeId: string, name: string, kind: SpaceKind) => void;
   toggleDevice: (homeId: string, spaceId: string, deviceId: string) => void;
   updateBrightness: (
@@ -432,11 +438,12 @@ export function HomeProvider({ children }: { children: ReactNode }) {
       selectedHomeId,
       setSelectedHomeId,
       currentHome,
-      addHome: (name, subtitle) => {
+      addHome: (name, subtitle, shortcuts) => {
         const newHome: Home = {
           id: name.toLowerCase().replace(/\s+/g, "-"),
           name,
           subtitle: subtitle || "Nuevo hogar",
+          shortcuts,
           spaces: [],
         };
  
@@ -444,6 +451,20 @@ export function HomeProvider({ children }: { children: ReactNode }) {
         setSelectedHomeId(newHome.id);
  
         return newHome;
+      },
+      updateHome: (homeId, name, subtitle, shortcuts) => {
+        const trimmedName = name.trim();
+        if (!trimmedName) return;
+
+        const nextSubtitle = subtitle.trim() || "Nuevo hogar";
+
+        setHomes((previousHomes) =>
+          previousHomes.map((home) =>
+            home.id === homeId
+              ? { ...home, name: trimmedName, subtitle: nextSubtitle, shortcuts }
+              : home,
+          ),
+        );
       },
       addSpace: (homeId, name, kind) => {
         const newSpace: Space = {

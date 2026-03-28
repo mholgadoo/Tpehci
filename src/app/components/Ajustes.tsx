@@ -10,18 +10,6 @@ interface SettingItem {
 
 const settings: SettingItem[] = [
   {
-    id: "wifi",
-    icon: <Wifi size={20} />,
-    label: "Red Wi-Fi",
-    value: "Casa_5G",
-  },
-  {
-    id: "security",
-    icon: <Shield size={20} />,
-    label: "Seguridad",
-    value: "Activa",
-  },
-  {
     id: "notifications",
     icon: <Bell size={20} />,
     label: "Notificaciones",
