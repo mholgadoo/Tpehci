@@ -180,7 +180,7 @@ function SegmentedButtons<TValue extends string>({
           : columns === 4
             ? "grid-cols-2 sm:grid-cols-4"
             : columns === 3
-              ? "grid-cols-1 sm:grid-cols-3"
+              ? "grid-cols-2 sm:grid-cols-3"
               : "grid-cols-2"
       }`}
     >
@@ -208,32 +208,42 @@ function SegmentedButtons<TValue extends string>({
 }
 
 function BlindPreview({ position = 0 }: { position?: number }) {
-  const closedRatio = 1 - position / 100;
-  const slatCount = 6;
+  const openRatio = position / 100;
+  const blindHeight = 18 + (1 - openRatio) * 130;
+  const railTop = Math.max(16, blindHeight - 6);
+  const glowOpacity = 0.18 + openRatio * 0.42;
 
   return (
     <div className="rounded-[22px] border border-[#2d3749] bg-[#0f1724] p-4">
-      <div className="relative h-48 overflow-hidden rounded-[18px] border border-[#314056] bg-[linear-gradient(180deg,#486585_0%,#8ab1d2_58%,#f3d39a_100%)]">
+      <div className="relative h-52 overflow-hidden rounded-[18px] border border-[#314056] bg-[#0b1320]">
         <div
-          className="absolute inset-0 bg-[#0d1420]/75 transition-opacity"
-          style={{ opacity: 0.28 + closedRatio * 0.5 }}
+          className="absolute inset-[14px] rounded-[14px] border border-[#32435b] bg-[linear-gradient(180deg,#4d6788_0%,#84a6c3_54%,#ead49f_100%)]"
         />
-        <div className="absolute inset-4 flex flex-col justify-between">
-          {Array.from({ length: slatCount }, (_, index) => {
-            const spread = (position / 100) * 14;
-            const offset = index * (spread / slatCount);
+        <div
+          className="absolute inset-[14px] rounded-[14px] bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.28),transparent_65%)] transition-opacity"
+          style={{ opacity: glowOpacity }}
+        />
 
-            return (
-              <div
-                key={index}
-                className="h-4 rounded-full bg-[#d6dcea]/90 shadow-[0_4px_12px_rgba(0,0,0,0.28)] transition-all"
-                style={{
-                  transform: `translateY(${offset}px)`,
-                  opacity: 0.95 - index * 0.05,
-                }}
-              />
-            );
-          })}
+        <div className="absolute inset-x-[14px] top-[14px] h-4 rounded-t-[14px] border border-[#8c94a7]/40 bg-[linear-gradient(180deg,#d9dee8_0%,#9ba4b7_100%)] shadow-[0_10px_24px_rgba(0,0,0,0.28)]" />
+
+        <div
+          className="absolute inset-x-[14px] top-[14px] overflow-hidden rounded-b-[12px] bg-[linear-gradient(180deg,#e7ecf5_0%,#d8dee9_48%,#c2cad8_100%)] shadow-[0_14px_28px_rgba(0,0,0,0.28)] transition-all duration-300"
+          style={{ height: `${blindHeight}px` }}
+        >
+          <div className="absolute inset-0 bg-[repeating-linear-gradient(180deg,rgba(255,255,255,0.65)_0px,rgba(255,255,255,0.65)_3px,rgba(192,202,216,0.85)_3px,rgba(192,202,216,0.85)_12px)] opacity-75" />
+          <div className="absolute inset-x-0 top-0 h-6 bg-[linear-gradient(180deg,rgba(0,0,0,0.08),transparent)]" />
+        </div>
+
+        <div
+          className="absolute inset-x-[18px] h-3 rounded-full border border-[#7f8799]/40 bg-[linear-gradient(180deg,#c6ccda_0%,#8f97aa_100%)] shadow-[0_6px_16px_rgba(0,0,0,0.32)] transition-all duration-300"
+          style={{ top: `${railTop}px` }}
+        />
+
+        <div className="absolute right-8 top-[18px] flex h-[156px] w-5 justify-center">
+          <div className="absolute top-0 h-[120px] w-px bg-[#cfd5e0]/70" />
+          <div className="absolute bottom-0 flex h-10 w-4 items-center justify-center rounded-full border border-[#cfd5e0]/40 bg-[#d8dee9]/15">
+            <div className="h-5 w-1 rounded-full bg-[#d8dee9]/80" />
+          </div>
         </div>
       </div>
     </div>

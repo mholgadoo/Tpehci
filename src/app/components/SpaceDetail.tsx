@@ -241,17 +241,17 @@ export function SpaceDetail() {
     return (
       <>
         <div
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 px-4"
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4"
           onClick={handleCloseDeviceDetails}
         >
           <div
-            className="relative w-full max-w-[560px] overflow-hidden rounded-[32px] bg-[#080a10] shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
+            className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[560px] flex-col overflow-hidden rounded-[32px] bg-[#080a10] shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#fbbf24_0%,rgba(251,191,36,0.22)_26%,transparent_70%)]" />
  
-            <div className="relative px-6 pb-8 pt-8 sm:px-8">
-              <div className="mb-8 flex items-center justify-between gap-4">
+            <div className="relative shrink-0 border-b border-[#1f2432] px-6 pb-5 pt-8 sm:px-8">
+              <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <div
                     className={`flex h-14 w-14 items-center justify-center rounded-[18px] border ${
@@ -283,7 +283,9 @@ export function SpaceDetail() {
                   <X size={18} />
                 </button>
               </div>
+            </div>
  
+            <div className="relative min-h-0 flex-1 overflow-y-auto px-6 pb-6 pt-6 sm:px-8">
               <div className="space-y-4">
                 <div className="grid gap-3 sm:grid-cols-3">
                   <div className="rounded-[20px] border border-[#2b3042] bg-[#111722] p-4">
@@ -352,17 +354,26 @@ export function SpaceDetail() {
                     />
                   </div>
                 </div>
- 
-                <div className="flex flex-col gap-3 border-t border-[#1f2432] pt-5 sm:flex-row sm:justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setIsDeleteConfirmOpen(true)}
-                    className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#8f3949] bg-[#2a141a] px-5 py-3 text-[15px] font-medium text-[#ffb4c0] transition-colors hover:bg-[#341820]"
-                  >
-                    <Trash2 size={16} />
-                    Eliminar dispositivo
-                  </button>
-                </div>
+              </div>
+            </div>
+
+            <div className="relative shrink-0 border-t border-[#1f2432] px-6 py-4 sm:px-8">
+              <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={handleCloseDeviceDetails}
+                  className="inline-flex items-center justify-center rounded-[18px] border border-[#2b3042] bg-[#151a25] px-5 py-3 text-[15px] font-medium text-[#d0d6e3] transition-colors hover:border-[#44506a] hover:text-white"
+                >
+                  Cerrar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsDeleteConfirmOpen(true)}
+                  className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#8f3949] bg-[#2a141a] px-5 py-3 text-[15px] font-medium text-[#ffb4c0] transition-colors hover:bg-[#341820]"
+                >
+                  <Trash2 size={16} />
+                  Eliminar dispositivo
+                </button>
               </div>
             </div>
           </div>
