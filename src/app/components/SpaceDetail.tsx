@@ -22,11 +22,15 @@ import {
   allowedDevicesBySpace,
   deviceOptions,
   deviceTypeLabels,
+  getDeviceSummary,
   getDeviceIcon,
+  isDeviceActive,
   useHome,
+  type Device,
   type DeviceKind,
 } from "../context/home-context";
 import { useIsMobile } from "../hooks/useIsMobile";
+import { DeviceDetailControls } from "./DeviceDetailControls";
  
 export function SpaceDetail() {
   const { homeId, spaceId } = useParams<{ homeId?: string; spaceId: string }>();
@@ -38,6 +42,7 @@ export function SpaceDetail() {
     setSelectedHomeId,
     toggleDevice,
     updateBrightness,
+    updateDeviceProperty,
     turnOffAllDevices,
     addDevice,
     deleteDevice,
@@ -65,12 +70,8 @@ export function SpaceDetail() {
   const space = home?.spaces.find((candidateSpace) => candidateSpace.id === spaceId) ?? null;
   const devices = space?.devices ?? [];
   const spaceName = space?.name || "Espacio";
-  const activeDevices = devices.filter((device) => device.status === "on").length;
-  const isDeviceVisuallyOn = (device: (typeof devices)[number]) => {
-    const deviceType = deviceOptions[device.kind].type;
-    if (deviceType !== "light") return device.status === "on";
-    return device.status === "on" && (device.brightness ?? 100) > 0;
-  };
+  const isDeviceVisuallyOn = (device: Device) => isDeviceActive(device);
+  const activeDevices = devices.filter((device) => isDeviceVisuallyOn(device)).length;
   const availableTypes =
     (space ? allowedDevicesBySpace[space.kind] : undefined) ||
     (Object.keys(deviceOptions) as DeviceKind[]);
@@ -231,12 +232,12 @@ export function SpaceDetail() {
  
   const renderDeviceDetailsModal = () => {
     if (!selectedDevice) return null;
- 
+
     const deviceType = deviceOptions[selectedDevice.kind].type;
-    const isLight = deviceType === "light";
     const isOn = isDeviceVisuallyOn(selectedDevice);
     const deviceLabel = deviceOptions[selectedDevice.kind].label;
- 
+    const deviceSummary = getDeviceSummary(selectedDevice);
+
     return (
       <>
         <div
@@ -254,7 +255,7 @@ export function SpaceDetail() {
                 <div className="flex items-center gap-4">
                   <div
                     className={`flex h-14 w-14 items-center justify-center rounded-[18px] border ${
-                      isOn && selectedDevice.brightness !== 0
+                      isOn
                         ? "border-[#f4c95d] bg-[#0f1219] text-[#f4c95d]"
                         : "border-[#2b3042] bg-[#151a25] text-[#8f97ab]"
                     }`}
@@ -292,6 +293,7 @@ export function SpaceDetail() {
                     <p className={`mt-3 text-[18px] font-medium ${isOn ? "text-[#f4c95d]" : "text-white"}`}>
                       {isOn ? "Encendido" : "Apagado"}
                     </p>
+                    <p className="mt-1 text-sm text-[#98a2b7]">{deviceSummary}</p>
                   </div>
  
                   <div className="rounded-[20px] border border-[#2b3042] bg-[#111722] p-4">
@@ -328,44 +330,27 @@ export function SpaceDetail() {
  
                 <div className="rounded-[24px] border border-[#2b3042] bg-[#111722] p-5">
                   <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                    Información
+                    Controles
                   </p>
-                  <p className="mt-3 text-[15px] leading-7 text-[#c3cad8]">
-                    {isLight
-                      ? "Podés ver y ajustar la intensidad de esta luz desde este segundo nivel."
-                      : "Acá quedan las acciones menos frecuentes para no recargar la grilla principal."}
-                  </p>
- 
-                  {isLight ? (
-                    <div className="mt-5">
-                      <div className="mb-2 flex items-center justify-between text-sm text-[#aeb6c8]">
-                        <span>Intensidad</span>
-                        <span>{selectedDevice.brightness ?? 0}%</span>
-                      </div>
-                      <div className="relative h-[6px] rounded-full bg-[#273246]">
-                        <div
-                          className="absolute left-0 top-0 h-full rounded-full bg-[#f0c45c]"
-                          style={{ width: `${selectedDevice.brightness ?? 0}%` }}
-                        />
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={selectedDevice.brightness ?? 0}
-                          onChange={(event) => {
-                            if (!home || !space) return;
-                            updateBrightness(
-                              home.id,
-                              space.id,
-                              selectedDevice.id,
-                              parseInt(event.target.value, 10),
-                            );
-                          }}
-                          className="absolute inset-0 h-[6px] w-full cursor-pointer opacity-0"
-                        />
-                      </div>
-                    </div>
-                  ) : null}
+                  <div className="mt-5">
+                    <DeviceDetailControls
+                      device={selectedDevice}
+                      onUpdate={(updates) => {
+                        if (!home || !space) return;
+
+                        if (
+                          selectedDevice.kind === "lamp" &&
+                          typeof updates.brightness === "number" &&
+                          Object.keys(updates).length === 1
+                        ) {
+                          updateBrightness(home.id, space.id, selectedDevice.id, updates.brightness);
+                          return;
+                        }
+
+                        updateDeviceProperty(home.id, space.id, selectedDevice.id, updates);
+                      }}
+                    />
+                  </div>
                 </div>
  
                 <div className="flex flex-col gap-3 border-t border-[#1f2432] pt-5 sm:flex-row sm:justify-end">
@@ -480,8 +465,7 @@ export function SpaceDetail() {
                           isDeviceVisuallyOn(device) ? "text-[#fbbf24]" : "text-[#6b7280]"
                         }`}
                       >
-                        {isDeviceVisuallyOn(device) ? "Encendido" : "Apagado"}
-                        {isDeviceVisuallyOn(device) && device.brightness !== undefined && ` · ${device.brightness}%`}
+                        {getDeviceSummary(device)}
                       </p>
                     </div>
                   </div>

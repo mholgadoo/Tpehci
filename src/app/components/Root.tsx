@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation, useNavigate } from "react-router";
+import { Link, Outlet, useLocation } from "react-router";
 import {
   Home,
   LogOut,
@@ -7,12 +7,9 @@ import {
   Sparkles,
   User,
   Users,
-  Zap,
 } from "lucide-react";
-import { useState } from "react";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { getAccountInitials, useAccount } from "../context/account-context";
-import { useHome } from "../context/home-context";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,9 +31,7 @@ const secondaryNavItem = {
 
 export function Root() {
   const location = useLocation();
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { currentHome } = useHome();
   const SecondaryIcon = secondaryNavItem.icon;
   const { accountOptions, selectedAccount, setSelectedAccount, setSessionClosed } =
     useAccount();
@@ -168,29 +163,6 @@ export function Root() {
               );
             })}
 
-            <button
-              type="button"
-              onClick={() => navigate("/shortcuts")}
-              className={`flex w-full items-start gap-3 rounded-[22px] border px-4 py-4 transition-all ${
-                isActive("/shortcuts")
-                  ? "border-[#f4c95d] bg-[#111722] text-[#f4c95d]"
-                  : "border-[#202636] bg-[#111520] text-[#d2d8e6] hover:border-[#33405a] hover:bg-[#171c28]"
-              }`}
-            >
-              <div
-                className={`flex h-11 w-11 items-center justify-center rounded-[16px] ${
-                  isActive("/shortcuts")
-                    ? "bg-[#0a0d13] text-[#f4c95d]"
-                    : "bg-[#171c28] text-[#aab3c8]"
-                }`}
-              >
-                <Zap size={20} />
-              </div>
-              <div className="flex flex-col items-start">
-                <p className="text-[16px] font-medium">Shortcuts</p>
-                <p className="text-sm text-[#8f97ab]">Accesos directos</p>
-              </div>
-            </button>
           </div>
         </div>
 

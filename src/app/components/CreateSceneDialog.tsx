@@ -3,31 +3,32 @@ import {
   Armchair,
   Bath,
   Bed,
-  Bell,
-  Blinds,
   BookOpen,
   Car,
   Check,
   ChefHat,
   ChevronLeft,
   ChevronRight,
-  CookingPot,
-  DoorOpen,
-  Droplet,
   Film,
   Heart,
-  Lightbulb,
   Monitor,
   Moon,
   Music,
-  Speaker,
   Sun,
   Sunset,
   TreePine,
   Tv,
-  Wind,
   Zap,
 } from "lucide-react";
+import {
+  createDevice,
+  getDeviceIcon,
+  getDeviceSummary,
+  isDeviceActive,
+  type Device,
+  type DeviceKind,
+} from "../context/home-context";
+import { DeviceDetailControls } from "./DeviceDetailControls";
 import {
   Dialog,
   DialogContent,
@@ -40,12 +41,9 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
-interface DeviceAttribute {
-  id: string;
+interface DeviceAttribute extends Device {
   spaceId: string;
   deviceIndex: number;
-  status: "on" | "off";
-  brightness?: number;
 }
 
 interface Space {
@@ -53,9 +51,9 @@ interface Space {
   name: string;
   icon: ReactNode;
   devices: Array<{
-    icon: ReactNode;
+    kind: DeviceKind;
     color?: string;
-    name?: string;
+    name: string;
   }>;
 }
 
@@ -88,11 +86,10 @@ const spaceData: Spaces = {
     name: "Sala de Estar",
     icon: <Armchair size={22} />,
     devices: [
-      { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
-      { icon: <Lightbulb size={14} />, name: "Luz Ambiental" },
-      { icon: <Speaker size={14} />, name: "Altavoz" },
-      { icon: <Blinds size={14} />, name: "Cortinas" },
-      { icon: <Bell size={14} />, name: "Timbre" },
+      { kind: "lamp", color: "text-yellow-500", name: "Luz Principal" },
+      { kind: "lamp", name: "Luz Ambiental" },
+      { kind: "speaker", name: "Parlante" },
+      { kind: "blind", name: "Persiana" },
     ],
   },
   dormitorio: {
@@ -100,10 +97,10 @@ const spaceData: Spaces = {
     name: "Dormitorio",
     icon: <Bed size={22} />,
     devices: [
-      { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
-      { icon: <Lightbulb size={14} />, name: "Luz de Noche" },
-      { icon: <Blinds size={14} />, name: "Cortinas" },
-      { icon: <Wind size={14} />, name: "Aire Acondicionado" },
+      { kind: "lamp", color: "text-yellow-500", name: "Luz Principal" },
+      { kind: "lamp", name: "Luz de Noche" },
+      { kind: "blind", name: "Persiana" },
+      { kind: "air", name: "Aire acondicionado" },
     ],
   },
   cocina: {
@@ -111,9 +108,9 @@ const spaceData: Spaces = {
     name: "Cocina",
     icon: <ChefHat size={22} />,
     devices: [
-      { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
-      { icon: <CookingPot size={14} />, name: "Horno" },
-      { icon: <Bell size={14} />, name: "Timbre" },
+      { kind: "lamp", color: "text-yellow-500", name: "Luz Principal" },
+      { kind: "oven", name: "Horno" },
+      { kind: "fridge", name: "Heladera" },
     ],
   },
   bano: {
@@ -121,8 +118,8 @@ const spaceData: Spaces = {
     name: "Baño",
     icon: <Bath size={22} />,
     devices: [
-      { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
-      { icon: <Wind size={14} />, name: "Extracto Humedad" },
+      { kind: "lamp", color: "text-yellow-500", name: "Luz Principal" },
+      { kind: "air", name: "Extractor" },
     ],
   },
   oficina: {
@@ -130,9 +127,9 @@ const spaceData: Spaces = {
     name: "Oficina",
     icon: <Monitor size={22} />,
     devices: [
-      { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
-      { icon: <Speaker size={14} />, name: "Altavoz" },
-      { icon: <Blinds size={14} />, name: "Cortinas" },
+      { kind: "lamp", color: "text-yellow-500", name: "Luz Principal" },
+      { kind: "speaker", name: "Parlante" },
+      { kind: "blind", name: "Persiana" },
     ],
   },
   garaje: {
@@ -140,9 +137,8 @@ const spaceData: Spaces = {
     name: "Garaje",
     icon: <Car size={22} />,
     devices: [
-      { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
-      { icon: <DoorOpen size={14} />, name: "Puerta" },
-      { icon: <Bell size={14} />, name: "Timbre" },
+      { kind: "lamp", color: "text-yellow-500", name: "Luz Principal" },
+      { kind: "door", name: "Puerta automática" },
     ],
   },
   jardin: {
@@ -150,9 +146,8 @@ const spaceData: Spaces = {
     name: "Jardín",
     icon: <TreePine size={22} />,
     devices: [
-      { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
-      { icon: <Droplet size={14} />, name: "Riego" },
-      { icon: <Bell size={14} />, name: "Timbre" },
+      { kind: "lamp", color: "text-yellow-500", name: "Luz Principal" },
+      { kind: "sprinkler", name: "Aspersor" },
     ],
   },
   terraza: {
@@ -160,9 +155,9 @@ const spaceData: Spaces = {
     name: "Terraza",
     icon: <Sun size={22} />,
     devices: [
-      { icon: <Lightbulb size={14} />, color: "text-yellow-500", name: "Luz Principal" },
-      { icon: <Speaker size={14} />, name: "Altavoz" },
-      { icon: <Blinds size={14} />, name: "Cortinas" },
+      { kind: "lamp", color: "text-yellow-500", name: "Luz Principal" },
+      { kind: "speaker", name: "Parlante" },
+      { kind: "blind", name: "Persiana" },
     ],
   },
 };
@@ -225,6 +220,71 @@ const steps = [
   { id: "review", label: "Resumen", description: "Chequeo final" },
 ];
 
+const getSpaceDeviceDefinition = (spaceId: string, deviceIndex: number) =>
+  spaceData[spaceId]?.devices[deviceIndex];
+
+const buildSceneDevice = (
+  spaceId: string,
+  deviceIndex: number,
+  status: Device["status"],
+  overrides: Partial<Device> = {},
+): DeviceAttribute => {
+  const definition = getSpaceDeviceDefinition(spaceId, deviceIndex);
+  const id = `${spaceId}-${deviceIndex}`;
+  const kind = definition?.kind ?? "lamp";
+  const name = definition?.name ?? `Dispositivo ${deviceIndex + 1}`;
+  const baseDevice = createDevice(
+    id,
+    name,
+    kind,
+    status,
+    kind === "lamp" ? 80 : undefined,
+  );
+
+  return {
+    ...baseDevice,
+    ...overrides,
+    id,
+    name,
+    kind,
+    spaceId,
+    deviceIndex,
+  };
+};
+
+const applySceneDeviceUpdates = (
+  currentDevice: DeviceAttribute,
+  updates: Partial<Device>,
+): DeviceAttribute => {
+  const nextDevice = {
+    ...buildSceneDevice(
+      currentDevice.spaceId,
+      currentDevice.deviceIndex,
+      updates.status ?? currentDevice.status,
+    ),
+    ...currentDevice,
+    ...updates,
+  };
+
+  if (currentDevice.kind === "lamp" && typeof updates.brightness === "number") {
+    nextDevice.status = updates.brightness === 0 ? "off" : "on";
+  }
+
+  if (currentDevice.kind === "blind") {
+    if (updates.status === "off") {
+      nextDevice.position = 0;
+    }
+    if (updates.status === "on" && !nextDevice.position) {
+      nextDevice.position = 100;
+    }
+    if (typeof updates.position === "number") {
+      nextDevice.status = updates.position > 0 ? "on" : "off";
+    }
+  }
+
+  return nextDevice;
+};
+
 export function CreateSceneDialog({
   open,
   onOpenChange,
@@ -245,7 +305,7 @@ export function CreateSceneDialog({
     sceneOptions.find((scene) => scene.value === sceneType) ?? sceneOptions[0];
 
   const activeDevices = useMemo(
-    () => deviceAttributes.filter((attribute) => attribute.status === "on"),
+    () => deviceAttributes.filter((attribute) => isDeviceActive(attribute)),
     [deviceAttributes],
   );
 
@@ -295,10 +355,9 @@ export function CreateSceneDialog({
       setSceneDescription(initialScene.description);
       setSceneType(initialScene.color);
       setDeviceAttributes(
-        initialScene.devices.map((device) => ({
-          ...device,
-          id: `${device.spaceId}-${device.deviceIndex}`,
-        })),
+        initialScene.devices.map((device) =>
+          buildSceneDevice(device.spaceId, device.deviceIndex, device.status, device),
+        ),
       );
       setActiveTab(initialScene.devices[0]?.spaceId || "sala");
       setCurrentStep(0);
@@ -319,7 +378,7 @@ export function CreateSceneDialog({
   const handleDeviceStatusChange = (
     spaceId: string,
     deviceIndex: number,
-    status: "on" | "off",
+    status: Device["status"],
   ) => {
     const id = `${spaceId}-${deviceIndex}`;
     setDeviceAttributes((previousAttributes) => {
@@ -329,21 +388,20 @@ export function CreateSceneDialog({
 
       if (existingAttribute) {
         return previousAttributes.map((attribute) =>
-          attribute.id === id ? { ...attribute, status } : attribute,
+          attribute.id === id
+            ? applySceneDeviceUpdates(attribute, { status })
+            : attribute,
         );
       }
 
-      return [
-        ...previousAttributes,
-        { id, spaceId, deviceIndex, status, brightness: 100 },
-      ];
+      return [...previousAttributes, buildSceneDevice(spaceId, deviceIndex, status)];
     });
   };
 
-  const handleBrightnessChange = (
+  const handleDevicePropertyChange = (
     spaceId: string,
     deviceIndex: number,
-    brightness: number,
+    updates: Partial<Device>,
   ) => {
     const id = `${spaceId}-${deviceIndex}`;
     setDeviceAttributes((previousAttributes) => {
@@ -353,13 +411,15 @@ export function CreateSceneDialog({
 
       if (existingAttribute) {
         return previousAttributes.map((attribute) =>
-          attribute.id === id ? { ...attribute, brightness } : attribute,
+          attribute.id === id
+            ? applySceneDeviceUpdates(attribute, updates)
+            : attribute,
         );
       }
 
       return [
         ...previousAttributes,
-        { id, spaceId, deviceIndex, status: "on", brightness },
+        buildSceneDevice(spaceId, deviceIndex, "on", updates),
       ];
     });
   };
@@ -652,7 +712,8 @@ export function CreateSceneDialog({
             <div className="max-h-[400px] space-y-3 overflow-y-auto pr-1">
               {space.devices.map((device, index) => {
                 const attribute = getDeviceAttribute(space.id, index);
-                const isActive = attribute?.status === "on";
+                const deviceState = attribute ?? buildSceneDevice(space.id, index, "off");
+                const isActive = isDeviceActive(deviceState);
 
                 return (
                   <div
@@ -672,16 +733,14 @@ export function CreateSceneDialog({
                               : "border-[#2b3548] bg-[#1a2230] text-[#8c96ab]"
                           }`}
                         >
-                          {device.icon}
+                          {getDeviceIcon(device.kind, 18)}
                         </div>
                         <div>
                           <h5 className="text-[16px] font-medium text-white">
                             {device.name || `Dispositivo ${index + 1}`}
                           </h5>
                           <p className="mt-1 text-sm text-[#98a2b7]">
-                            {isActive
-                              ? `Encendido${attribute?.brightness !== undefined ? ` · ${attribute.brightness}%` : ""}`
-                              : "Apagado"}
+                            {getDeviceSummary(deviceState)}
                           </p>
                         </div>
                       </div>
@@ -708,31 +767,13 @@ export function CreateSceneDialog({
                     </div>
 
                     {isActive ? (
-                      <div className="mt-4">
-                        <div className="mb-2 flex items-center justify-between text-sm text-[#aeb6c8]">
-                          <span>Intensidad</span>
-                          <span>{attribute?.brightness ?? 0}%</span>
-                        </div>
-                        <div className="relative h-[6px] rounded-full bg-[#273246]">
-                          <div
-                            className="absolute left-0 top-0 h-full rounded-full bg-[#f0c45c]"
-                            style={{ width: `${attribute?.brightness ?? 0}%` }}
-                          />
-                          <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={attribute?.brightness ?? 0}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                              handleBrightnessChange(
-                                space.id,
-                                index,
-                                parseInt(event.target.value, 10),
-                              )
-                            }
-                            className="absolute inset-0 h-[6px] w-full cursor-pointer opacity-0"
-                          />
-                        </div>
+                      <div className="mt-4 rounded-[20px] border border-[#232c3d] bg-[#0d1420] p-4">
+                        <DeviceDetailControls
+                          device={deviceState}
+                          onUpdate={(updates) =>
+                            handleDevicePropertyChange(space.id, index, updates)
+                          }
+                        />
                       </div>
                     ) : null}
                   </div>
@@ -820,14 +861,15 @@ export function CreateSceneDialog({
                       </p>
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-3 space-y-2">
                     {space.devices.map((device) => (
-                      <span
+                      <div
                         key={device.id}
-                        className="rounded-full border border-[#2b3548] bg-[#10151f] px-3 py-1.5 text-sm text-[#d0d6e3]"
+                        className="flex items-center justify-between gap-3 rounded-[16px] border border-[#2b3548] bg-[#10151f] px-3 py-3 text-sm text-[#d0d6e3]"
                       >
-                        {device.deviceName}
-                      </span>
+                        <span>{device.deviceName}</span>
+                        <span className="text-[#98a2b7]">{getDeviceSummary(device)}</span>
+                      </div>
                     ))}
                   </div>
                 </div>

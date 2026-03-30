@@ -26,7 +26,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
- 
+
 export type DeviceKind =
   | "lamp"
   | "speaker"
@@ -38,7 +38,7 @@ export type DeviceKind =
   | "door"
   | "sprinkler"
   | "vacuum";
- 
+
 export type DeviceType =
   | "light"
   | "audio"
@@ -49,7 +49,7 @@ export type DeviceType =
   | "access"
   | "water"
   | "cleaning";
- 
+
 export type SpaceKind =
   | "sala"
   | "dormitorio"
@@ -59,26 +59,73 @@ export type SpaceKind =
   | "garaje"
   | "jardin"
   | "terraza";
- 
+
+export type DeviceStatus = "on" | "off";
+export type AcFanSpeed = "low" | "med" | "high" | "auto";
+export type AcMode = "cool" | "heat" | "fan" | "dry" | "auto";
+export type OvenMode =
+  | "convection"
+  | "grill"
+  | "upper_lower"
+  | "fan_forced"
+  | "defrost";
+export type AlarmMode =
+  | "disarmed"
+  | "armed_away"
+  | "armed_home"
+  | "armed_night";
+export type HomeShortcutKind =
+  | "alarm"
+  | "speaker"
+  | "air"
+  | "blind"
+  | "door"
+  | "oven"
+  | "vacuum"
+  | "sprinkler";
+
 export interface Device {
   id: string;
   name: string;
   kind: DeviceKind;
-  status: "on" | "off";
+  status: DeviceStatus;
   brightness?: number;
+  targetTemp?: number;
+  fanSpeed?: AcFanSpeed;
+  acMode?: AcMode;
+  swing?: boolean;
+  ovenTemp?: number;
+  ovenMode?: OvenMode;
+  timerMinutes?: number;
+  position?: number;
+  volume?: number;
+  fridgeTemp?: number;
+  freezerTemp?: number;
 }
- 
+
+export interface AlarmZone {
+  id: string;
+  name: string;
+  armed: boolean;
+}
+
+export interface AlarmSystem {
+  mode: AlarmMode;
+  zones: AlarmZone[];
+  pin: string;
+}
+
 export interface Space {
   id: string;
   name: string;
   kind: SpaceKind;
   devices: Device[];
 }
- 
-export interface HomeAlarm {
+
+export interface HomeShortcut {
   id: string;
+  kind: HomeShortcutKind;
   name: string;
-  status: "on" | "off";
 }
 
 export interface Home {
@@ -86,31 +133,70 @@ export interface Home {
   name: string;
   subtitle: string;
   shortcuts?: HomeShortcut[];
-  alarms?: HomeAlarm[];
   spaces: Space[];
+  alarm: AlarmSystem;
 }
 
-export type HomeShortcutKind = "alarm" | "speaker" | "air" | "blind" | "door" | "oven" | "vacuum" | "sprinkler";
-
-export interface HomeShortcut {
-  id: string;
-  kind: HomeShortcutKind;
-  name: string;
-}
- 
 interface DeviceOption {
   id: DeviceKind;
   label: string;
   type: DeviceType;
   icon: LucideIcon;
 }
- 
+
 interface SpaceOption {
   id: SpaceKind;
   name: string;
   icon: LucideIcon;
 }
- 
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+const roundToStep = (value: number, step: number) =>
+  Math.round(value / step) * step;
+
+const normalizeTextId = (value: string) =>
+  value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+const defaultAlarmZones = (): AlarmZone[] => [
+  { id: "perimetro", name: "Perímetro", armed: false },
+  { id: "interior", name: "Interior", armed: false },
+  { id: "garaje", name: "Garaje", armed: false },
+  { id: "jardin", name: "Jardín", armed: false },
+];
+
+const syncAlarmZonesForMode = (zones: AlarmZone[], mode: AlarmMode) =>
+  zones.map((zone) => ({
+    ...zone,
+    armed: mode === "disarmed" ? false : true,
+  }));
+
+const deriveAlarmModeFromZones = (currentMode: AlarmMode, zones: AlarmZone[]) => {
+  const hasArmedZones = zones.some((zone) => zone.armed);
+
+  if (!hasArmedZones) {
+    return "disarmed";
+  }
+
+  return currentMode === "disarmed" ? "armed_home" : currentMode;
+};
+
+export const createAlarmSystem = (
+  mode: AlarmMode = "disarmed",
+  zones: AlarmZone[] = defaultAlarmZones(),
+  pin = "1234",
+): AlarmSystem => ({
+  mode,
+  pin,
+  zones,
+});
+
 export const deviceOptions: Record<DeviceKind, DeviceOption> = {
   lamp: {
     id: "lamp",
@@ -173,7 +259,7 @@ export const deviceOptions: Record<DeviceKind, DeviceOption> = {
     type: "cleaning",
   },
 };
- 
+
 export const deviceTypeLabels: Record<DeviceType, string> = {
   light: "Iluminación",
   audio: "Audio",
@@ -185,7 +271,7 @@ export const deviceTypeLabels: Record<DeviceType, string> = {
   water: "Agua",
   cleaning: "Limpieza",
 };
- 
+
 export const spaceTypeOptions: SpaceOption[] = [
   { id: "sala", name: "Sala de Estar", icon: Armchair },
   { id: "dormitorio", name: "Dormitorio", icon: Bed },
@@ -196,7 +282,7 @@ export const spaceTypeOptions: SpaceOption[] = [
   { id: "jardin", name: "Jardín", icon: TreePine },
   { id: "terraza", name: "Terraza", icon: Sun },
 ];
- 
+
 export const allowedDevicesBySpace: Record<SpaceKind, DeviceKind[]> = {
   cocina: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
   sala: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
@@ -207,44 +293,198 @@ export const allowedDevicesBySpace: Record<SpaceKind, DeviceKind[]> = {
   jardin: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
   terraza: ["lamp", "speaker", "blind", "oven", "air", "fridge", "door", "sprinkler", "vacuum"],
 };
- 
+
+export const acModeLabels: Record<AcMode, string> = {
+  cool: "Frío",
+  heat: "Calor",
+  fan: "Ventilador",
+  dry: "Seco",
+  auto: "Auto",
+};
+
+export const fanSpeedLabels: Record<AcFanSpeed, string> = {
+  low: "Bajo",
+  med: "Medio",
+  high: "Alto",
+  auto: "Auto",
+};
+
+export const ovenModeLabels: Record<OvenMode, string> = {
+  convection: "Convección",
+  grill: "Grill",
+  upper_lower: "Superior e inferior",
+  fan_forced: "Turbo ventilado",
+  defrost: "Descongelar",
+};
+
+export const alarmModeLabels: Record<AlarmMode, string> = {
+  disarmed: "Desarmado",
+  armed_away: "Armado ausente",
+  armed_home: "Armado casa",
+  armed_night: "Modo noche",
+};
+
+function normalizeDeviceByKind(device: Device): Device {
+  const base: Device = {
+    ...device,
+    brightness: device.brightness ?? undefined,
+  };
+
+  switch (device.kind) {
+    case "lamp":
+      return {
+        ...base,
+        brightness: clamp(base.brightness ?? 80, 0, 100),
+      };
+    case "air":
+      return {
+        ...base,
+        targetTemp: clamp(base.targetTemp ?? 24, 16, 30),
+        fanSpeed: base.fanSpeed ?? "auto",
+        acMode: base.acMode ?? "cool",
+        swing: base.swing ?? false,
+      };
+    case "oven":
+      return {
+        ...base,
+        ovenTemp: clamp(roundToStep(base.ovenTemp ?? 180, 5), 50, 300),
+        ovenMode: base.ovenMode ?? "convection",
+        timerMinutes: Math.max(0, roundToStep(base.timerMinutes ?? 0, 5)),
+      };
+    case "blind": {
+      const position = clamp(base.position ?? (base.status === "on" ? 100 : 0), 0, 100);
+      return {
+        ...base,
+        position,
+        status: position > 0 ? "on" : "off",
+      };
+    }
+    case "speaker":
+      return {
+        ...base,
+        volume: clamp(base.volume ?? 50, 0, 100),
+      };
+    case "fridge":
+      return {
+        ...base,
+        fridgeTemp: clamp(base.fridgeTemp ?? 4, 1, 7),
+        freezerTemp: clamp(base.freezerTemp ?? -18, -24, -16),
+      };
+    default:
+      return base;
+  }
+}
+
 export const createDevice = (
   id: string,
   name: string,
   kind: DeviceKind,
-  status: "on" | "off",
+  status: DeviceStatus,
   brightness?: number,
-): Device => ({
+): Device => normalizeDeviceByKind({
   id,
   name,
   kind,
   status,
   brightness,
 });
- 
+
+export function isDeviceActive(device: Device) {
+  if (device.kind === "lamp") {
+    return device.status === "on" && (device.brightness ?? 100) > 0;
+  }
+
+  if (device.kind === "blind") {
+    return (device.position ?? 0) > 0;
+  }
+
+  return device.status === "on";
+}
+
+export function formatBlindPosition(position = 0) {
+  if (position <= 0) return "Cerrada";
+  if (position >= 100) return "Abierta";
+  return `${position}% abierta`;
+}
+
+export function formatTimerMinutes(timerMinutes = 0) {
+  if (timerMinutes <= 0) return "Sin timer";
+
+  const hours = Math.floor(timerMinutes / 60);
+  const minutes = timerMinutes % 60;
+
+  if (hours && minutes) return `${hours}h ${minutes}m`;
+  if (hours) return `${hours}h`;
+  return `${minutes}m`;
+}
+
+export function getDeviceSummary(device: Device) {
+  switch (device.kind) {
+    case "lamp":
+      if (!isDeviceActive(device)) return "Apagado";
+      return `Encendido · ${device.brightness ?? 80}%`;
+    case "air":
+      if (device.status === "off") return "Apagado";
+      return `${device.targetTemp ?? 24}°C · ${acModeLabels[device.acMode ?? "cool"]}`;
+    case "oven":
+      if (device.status === "off") return "Apagado";
+      return `${device.ovenTemp ?? 180}°C · ${ovenModeLabels[device.ovenMode ?? "convection"]}`;
+    case "blind":
+      return formatBlindPosition(device.position ?? 0);
+    case "speaker":
+      if (device.status === "off") return "Apagado";
+      return `Vol. ${device.volume ?? 50}%`;
+    case "fridge":
+      if (device.status === "off") return "Apagado";
+      return `${device.fridgeTemp ?? 4}°C · Freezer ${device.freezerTemp ?? -18}°C`;
+    default:
+      return device.status === "on" ? "Encendido" : "Apagado";
+  }
+}
+
+const defaultShortcutsByHome: Record<string, HomeShortcut[]> = {
+  "mi-hogar": [
+    { id: "speaker-main", kind: "speaker", name: "Parlante" },
+    { id: "air-main", kind: "air", name: "Aire" },
+    { id: "blind-main", kind: "blind", name: "Persiana" },
+    { id: "door-main", kind: "door", name: "Puerta" },
+  ],
+  "casa-playa": [
+    { id: "speaker-beach", kind: "speaker", name: "Parlante" },
+    { id: "blind-beach", kind: "blind", name: "Persiana" },
+  ],
+  estudio: [
+    { id: "speaker-studio", kind: "speaker", name: "Parlante" },
+    { id: "air-studio", kind: "air", name: "Clima" },
+  ],
+};
+
 export function getDeviceIcon(kind: DeviceKind, size = 20, strokeWidth = 1.8) {
   const Icon = deviceOptions[kind].icon;
   return <Icon size={size} strokeWidth={strokeWidth} />;
 }
- 
+
 export function getSpaceIcon(kind: SpaceKind, size = 28, strokeWidth = 1.8) {
   const option = spaceTypeOptions.find((space) => space.id === kind);
- 
+
   if (!option) return null;
- 
+
   const Icon = option.icon;
   return <Icon size={size} strokeWidth={strokeWidth} />;
 }
- 
+
 const initialHomes: Home[] = [
   {
     id: "mi-hogar",
     name: "Mi Hogar",
     subtitle: "Palermo, Buenos Aires",
-    alarms: [
-      { id: "alarm-1", name: "Sistema Central", status: "on" },
-      { id: "alarm-2", name: "Puerta Principal", status: "off" },
-    ],
+    shortcuts: defaultShortcutsByHome["mi-hogar"],
+    alarm: createAlarmSystem("armed_home", [
+      { id: "perimetro", name: "Perímetro", armed: true },
+      { id: "interior", name: "Interior", armed: false },
+      { id: "garaje", name: "Garaje", armed: true },
+      { id: "jardin", name: "Jardín", armed: true },
+    ]),
     spaces: [
       {
         id: "sala",
@@ -254,7 +494,7 @@ const initialHomes: Home[] = [
           createDevice("luz-principal", "Luz Principal", "lamp", "on", 80),
           createDevice("luz-ambiente", "Luz Ambiente", "lamp", "on", 50),
           createDevice("parlante", "Parlante", "speaker", "off"),
-          createDevice("persiana", "Persiana Principal", "blind", "off"),
+          { ...createDevice("persiana", "Persiana Principal", "blind", "off"), position: 0 },
         ],
       },
       {
@@ -264,8 +504,13 @@ const initialHomes: Home[] = [
         devices: [
           createDevice("luz-techo", "Luz de Techo", "lamp", "on", 60),
           createDevice("luz-mesita", "Luz Mesita", "lamp", "off"),
-          createDevice("persiana-dormitorio", "Persiana Blackout", "blind", "off"),
-          createDevice("aire-dormitorio", "Aire acondicionado", "air", "off"),
+          { ...createDevice("persiana-dormitorio", "Persiana Blackout", "blind", "off"), position: 0 },
+          {
+            ...createDevice("aire-dormitorio", "Aire acondicionado", "air", "off"),
+            targetTemp: 24,
+            fanSpeed: "auto",
+            acMode: "cool",
+          },
         ],
       },
       {
@@ -274,7 +519,7 @@ const initialHomes: Home[] = [
         kind: "cocina",
         devices: [
           createDevice("luz-cocina", "Luz de Cocina", "lamp", "on", 100),
-          createDevice("horno", "Horno Eléctrico", "oven", "off"),
+          { ...createDevice("horno", "Horno Eléctrico", "oven", "off"), ovenTemp: 180 },
           createDevice("heladera", "Heladera", "fridge", "on"),
           createDevice("luz-bajo-mueble", "Luz Bajo Mueble", "lamp", "off"),
         ],
@@ -295,7 +540,7 @@ const initialHomes: Home[] = [
         devices: [
           createDevice("luz-escritorio", "Luz Escritorio", "lamp", "on", 90),
           createDevice("parlante-oficina", "Parlante", "speaker", "off"),
-          createDevice("persiana-oficina", "Persiana", "blind", "on"),
+          { ...createDevice("persiana-oficina", "Persiana", "blind", "on"), position: 100 },
         ],
       },
       {
@@ -323,7 +568,7 @@ const initialHomes: Home[] = [
         devices: [
           createDevice("luz-terraza", "Luz de Terraza", "lamp", "on", 85),
           createDevice("parlante-terraza", "Parlante exterior", "speaker", "off"),
-          createDevice("persiana-terraza", "Persiana plegable", "blind", "off"),
+          { ...createDevice("persiana-terraza", "Persiana plegable", "blind", "off"), position: 0 },
         ],
       },
     ],
@@ -332,9 +577,11 @@ const initialHomes: Home[] = [
     id: "casa-playa",
     name: "Casa de Playa",
     subtitle: "Pinamar, Buenos Aires",
-    alarms: [
-      { id: "alarm-3", name: "Sistema Perimetral", status: "off" },
-    ],
+    shortcuts: defaultShortcutsByHome["casa-playa"],
+    alarm: createAlarmSystem("disarmed", [
+      { id: "perimetro-playa", name: "Perímetro", armed: false },
+      { id: "interior-playa", name: "Interior", armed: false },
+    ]),
     spaces: [
       {
         id: "sala",
@@ -343,7 +590,7 @@ const initialHomes: Home[] = [
         devices: [
           createDevice("luz-sala-playa", "Luz Principal", "lamp", "on", 75),
           createDevice("parlante-playa", "Parlante", "speaker", "off"),
-          createDevice("persiana-playa", "Persiana", "blind", "off"),
+          { ...createDevice("persiana-playa", "Persiana", "blind", "off"), position: 0 },
         ],
       },
       {
@@ -370,6 +617,11 @@ const initialHomes: Home[] = [
     id: "estudio",
     name: "Estudio",
     subtitle: "Microcentro, Buenos Aires",
+    shortcuts: defaultShortcutsByHome.estudio,
+    alarm: createAlarmSystem("armed_night", [
+      { id: "perimetro-estudio", name: "Perímetro", armed: true },
+      { id: "interior-estudio", name: "Interior", armed: false },
+    ]),
     spaces: [
       {
         id: "oficina",
@@ -378,7 +630,7 @@ const initialHomes: Home[] = [
         devices: [
           createDevice("luz-estudio", "Luz de Escritorio", "lamp", "on", 85),
           createDevice("parlante-estudio", "Parlante", "speaker", "off"),
-          createDevice("persiana-estudio", "Persiana", "blind", "on"),
+          { ...createDevice("persiana-estudio", "Persiana", "blind", "on"), position: 100 },
         ],
       },
       {
@@ -393,7 +645,7 @@ const initialHomes: Home[] = [
     ],
   },
 ];
- 
+
 interface HomeContextValue {
   homes: Home[];
   selectedHomeId: string;
@@ -403,27 +655,23 @@ interface HomeContextValue {
   updateHome: (homeId: string, name: string, subtitle: string, shortcuts: HomeShortcut[]) => void;
   addSpace: (homeId: string, name: string, kind: SpaceKind) => void;
   toggleDevice: (homeId: string, spaceId: string, deviceId: string) => void;
-  updateBrightness: (
+  updateBrightness: (homeId: string, spaceId: string, deviceId: string, value: number) => void;
+  updateDeviceProperty: (
     homeId: string,
     spaceId: string,
     deviceId: string,
-    value: number,
+    updates: Partial<Device>,
   ) => void;
   turnOffAllDevices: (homeId: string, spaceId: string) => void;
-  addDevice: (
-    homeId: string,
-    spaceId: string,
-    name: string,
-    kind: DeviceKind,
-  ) => void;
+  addDevice: (homeId: string, spaceId: string, name: string, kind: DeviceKind) => void;
   deleteDevice: (homeId: string, spaceId: string, deviceId: string) => void;
-  addAlarm: (homeId: string, name: string) => void;
-  deleteAlarm: (homeId: string, alarmId: string) => void;
-  toggleAlarmStatus: (homeId: string, alarmId: string) => void;
+  updateAlarmMode: (homeId: string, mode: AlarmMode) => void;
+  updateAlarmZone: (homeId: string, zoneId: string, armed: boolean) => void;
+  updateAlarmPin: (homeId: string, pin: string) => void;
 }
- 
+
 const HomeContext = createContext<HomeContextValue | null>(null);
- 
+
 function updateSpace(
   homes: Home[],
   homeId: string,
@@ -441,14 +689,82 @@ function updateSpace(
       : home,
   );
 }
- 
+
+function updateHomeAlarm(
+  homes: Home[],
+  homeId: string,
+  updater: (alarm: AlarmSystem) => AlarmSystem,
+) {
+  return homes.map((home) =>
+    home.id === homeId
+      ? {
+          ...home,
+          alarm: updater(home.alarm),
+        }
+      : home,
+  );
+}
+
+function buildToggledDevice(device: Device) {
+  const nextStatus: DeviceStatus = device.status === "on" ? "off" : "on";
+
+  if (device.kind === "lamp") {
+    return normalizeDeviceByKind({
+      ...device,
+      status: nextStatus,
+      brightness:
+        nextStatus === "on"
+          ? clamp(device.brightness && device.brightness > 0 ? device.brightness : 80, 1, 100)
+          : 0,
+    });
+  }
+
+  if (device.kind === "blind") {
+    return normalizeDeviceByKind({
+      ...device,
+      status: nextStatus,
+      position:
+        nextStatus === "on"
+          ? clamp(device.position && device.position > 0 ? device.position : 100, 1, 100)
+          : 0,
+    });
+  }
+
+  return normalizeDeviceByKind({
+    ...device,
+    status: nextStatus,
+  });
+}
+
+function buildUpdatedDevice(device: Device, updates: Partial<Device>) {
+  const merged = normalizeDeviceByKind({
+    ...device,
+    ...updates,
+  });
+
+  if (device.kind === "lamp" && updates.brightness !== undefined) {
+    return {
+      ...merged,
+      status: updates.brightness === 0 ? "off" : merged.status === "off" ? "on" : merged.status,
+    };
+  }
+
+  if (device.kind === "blind" && updates.position !== undefined) {
+    return {
+      ...merged,
+      status: (merged.position ?? 0) > 0 ? "on" : "off",
+    };
+  }
+
+  return merged;
+}
+
 export function HomeProvider({ children }: { children: ReactNode }) {
   const [homes, setHomes] = useState<Home[]>(initialHomes);
   const [selectedHomeId, setSelectedHomeId] = useState(initialHomes[0].id);
- 
-  const currentHome =
-    homes.find((home) => home.id === selectedHomeId) ?? homes[0];
- 
+
+  const currentHome = homes.find((home) => home.id === selectedHomeId) ?? homes[0];
+
   const value = useMemo<HomeContextValue>(
     () => ({
       homes,
@@ -456,38 +772,34 @@ export function HomeProvider({ children }: { children: ReactNode }) {
       setSelectedHomeId,
       currentHome,
       addHome: (name, subtitle, shortcuts) => {
-        const normalizedShortcuts = [
-          {
-            id: `alarm-${Date.now()}`,
-            kind: "alarm" as const,
-            name: "",
-          },
-          ...shortcuts.filter((shortcut) => shortcut.kind !== "alarm"),
-        ];
-
+        const trimmedName = name.trim();
         const newHome: Home = {
-          id: name.toLowerCase().replace(/\s+/g, "-"),
-          name,
-          subtitle: subtitle || "Nuevo hogar",
-          shortcuts: normalizedShortcuts,
+          id: normalizeTextId(trimmedName || `hogar-${Date.now()}`),
+          name: trimmedName || "Nuevo hogar",
+          subtitle: subtitle.trim() || "Nuevo hogar",
+          shortcuts: shortcuts.filter((shortcut) => shortcut.kind !== "alarm"),
           spaces: [],
+          alarm: createAlarmSystem(),
         };
- 
+
         setHomes((previousHomes) => [...previousHomes, newHome]);
         setSelectedHomeId(newHome.id);
- 
+
         return newHome;
       },
       updateHome: (homeId, name, subtitle, shortcuts) => {
         const trimmedName = name.trim();
         if (!trimmedName) return;
 
-        const nextSubtitle = subtitle.trim() || "Nuevo hogar";
-
         setHomes((previousHomes) =>
           previousHomes.map((home) =>
             home.id === homeId
-              ? { ...home, name: trimmedName, subtitle: nextSubtitle, shortcuts }
+              ? {
+                  ...home,
+                  name: trimmedName,
+                  subtitle: subtitle.trim() || "Nuevo hogar",
+                  shortcuts: shortcuts.filter((shortcut) => shortcut.kind !== "alarm"),
+                }
               : home,
           ),
         );
@@ -499,7 +811,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           kind,
           devices: [],
         };
- 
+
         setHomes((previousHomes) =>
           previousHomes.map((home) =>
             home.id === homeId
@@ -513,12 +825,7 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           updateSpace(previousHomes, homeId, spaceId, (space) => ({
             ...space,
             devices: space.devices.map((device) =>
-              device.id === deviceId
-                ? {
-                    ...device,
-                    status: device.status === "on" ? "off" : "on",
-                  }
-                : device,
+              device.id === deviceId ? buildToggledDevice(device) : device,
             ),
           })),
         );
@@ -527,14 +834,21 @@ export function HomeProvider({ children }: { children: ReactNode }) {
         setHomes((previousHomes) =>
           updateSpace(previousHomes, homeId, spaceId, (space) => ({
             ...space,
-            devices: space.devices.map((device) => {
-              if (device.id !== deviceId) return device;
-              // brightness 0% → apagar automáticamente
-              // brightness >0 con dispositivo apagado → encender automáticamente
-              const newStatus =
-                value === 0 ? "off" : device.status === "off" ? "on" : device.status;
-              return { ...device, brightness: value, status: newStatus };
-            }),
+            devices: space.devices.map((device) =>
+              device.id === deviceId
+                ? buildUpdatedDevice(device, { brightness: clamp(value, 0, 100) })
+                : device,
+            ),
+          })),
+        );
+      },
+      updateDeviceProperty: (homeId, spaceId, deviceId, updates) => {
+        setHomes((previousHomes) =>
+          updateSpace(previousHomes, homeId, spaceId, (space) => ({
+            ...space,
+            devices: space.devices.map((device) =>
+              device.id === deviceId ? buildUpdatedDevice(device, updates) : device,
+            ),
           })),
         );
       },
@@ -542,9 +856,9 @@ export function HomeProvider({ children }: { children: ReactNode }) {
         setHomes((previousHomes) =>
           updateSpace(previousHomes, homeId, spaceId, (space) => ({
             ...space,
-            devices: space.devices.map((device) => ({
+            devices: space.devices.map((device) => buildToggledDevice({
               ...device,
-              status: "off" as const,
+              status: "on",
             })),
           })),
         );
@@ -555,10 +869,10 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           `device-${Date.now()}`,
           name,
           kind,
-          kind === "alarm" || kind === "fridge" ? "on" : "off",
+          kind === "fridge" ? "on" : "off",
           option.type === "light" ? 80 : undefined,
         );
- 
+
         setHomes((previousHomes) =>
           updateSpace(previousHomes, homeId, spaceId, (space) => ({
             ...space,
@@ -574,67 +888,52 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           })),
         );
       },
-      addAlarm: (homeId, name) => {
+      updateAlarmMode: (homeId, mode) => {
         setHomes((previousHomes) =>
-          previousHomes.map((home) =>
-            home.id === homeId
-              ? {
-                  ...home,
-                  alarms: [
-                    ...(home.alarms ?? []),
-                    {
-                      id: `alarm-${Date.now()}`,
-                      name,
-                      status: "off" as const,
-                    },
-                  ],
-                }
-              : home,
-          ),
+          updateHomeAlarm(previousHomes, homeId, (alarm) => ({
+            ...alarm,
+            mode,
+            zones: syncAlarmZonesForMode(alarm.zones, mode),
+          })),
         );
       },
-      deleteAlarm: (homeId, alarmId) => {
+      updateAlarmZone: (homeId, zoneId, armed) => {
         setHomes((previousHomes) =>
-          previousHomes.map((home) =>
-            home.id === homeId
-              ? {
-                  ...home,
-                  alarms: (home.alarms ?? []).filter((alarm) => alarm.id !== alarmId),
-                }
-              : home,
-          ),
+          updateHomeAlarm(previousHomes, homeId, (alarm) => ({
+            ...alarm,
+            zones: alarm.zones.map((zone) =>
+              zone.id === zoneId ? { ...zone, armed } : zone,
+            ),
+            mode: deriveAlarmModeFromZones(
+              alarm.mode,
+              alarm.zones.map((zone) =>
+                zone.id === zoneId ? { ...zone, armed } : zone,
+              ),
+            ),
+          })),
         );
       },
-      toggleAlarmStatus: (homeId, alarmId) => {
+      updateAlarmPin: (homeId, pin) => {
         setHomes((previousHomes) =>
-          previousHomes.map((home) =>
-            home.id === homeId
-              ? {
-                  ...home,
-                  alarms: (home.alarms ?? []).map((alarm) =>
-                    alarm.id === alarmId
-                      ? { ...alarm, status: alarm.status === "on" ? "off" : "on" }
-                      : alarm,
-                  ),
-                }
-              : home,
-          ),
+          updateHomeAlarm(previousHomes, homeId, (alarm) => ({
+            ...alarm,
+            pin,
+          })),
         );
       },
     }),
     [currentHome, homes, selectedHomeId],
   );
 
- 
   return <HomeContext.Provider value={value}>{children}</HomeContext.Provider>;
 }
- 
+
 export function useHome() {
   const context = useContext(HomeContext);
- 
+
   if (!context) {
     throw new Error("useHome must be used within a HomeProvider");
   }
- 
+
   return context;
 }

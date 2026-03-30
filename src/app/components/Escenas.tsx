@@ -14,6 +14,13 @@ import {
   Zap,
 } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  createDevice,
+  getDeviceSummary,
+  isDeviceActive,
+  type Device,
+  type DeviceKind,
+} from "../context/home-context";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { CreateSceneDialog } from "./CreateSceneDialog";
 import {
@@ -34,12 +41,9 @@ type SceneTypeId =
   | "atardecer"
   | "cine";
 
-interface SceneDeviceAttribute {
-  id: string;
+interface SceneDeviceAttribute extends Device {
   spaceId: string;
   deviceIndex: number;
-  status: "on" | "off";
-  brightness?: number;
 }
 
 interface SceneDeviceConfig extends SceneDeviceAttribute {
@@ -114,57 +118,105 @@ const sceneTypeMeta: Record<
   },
 };
 
-const sceneSpaceCatalog: Record<string, { name: string; devices: string[] }> = {
+const sceneSpaceCatalog: Record<
+  string,
+  { name: string; devices: Array<{ name: string; kind: DeviceKind }> }
+> = {
   sala: {
     name: "Sala de Estar",
-    devices: ["Luz Principal", "Luz Ambiental", "Altavoz", "Cortinas", "Timbre"],
+    devices: [
+      { name: "Luz Principal", kind: "lamp" },
+      { name: "Luz Ambiental", kind: "lamp" },
+      { name: "Parlante", kind: "speaker" },
+      { name: "Persiana", kind: "blind" },
+    ],
   },
   dormitorio: {
     name: "Dormitorio",
-    devices: ["Luz Principal", "Luz de Noche", "Cortinas", "Aire Acondicionado"],
+    devices: [
+      { name: "Luz Principal", kind: "lamp" },
+      { name: "Luz de Noche", kind: "lamp" },
+      { name: "Persiana", kind: "blind" },
+      { name: "Aire acondicionado", kind: "air" },
+    ],
   },
   cocina: {
     name: "Cocina",
-    devices: ["Luz Principal", "Horno", "Timbre"],
+    devices: [
+      { name: "Luz Principal", kind: "lamp" },
+      { name: "Horno", kind: "oven" },
+      { name: "Heladera", kind: "fridge" },
+    ],
   },
   bano: {
     name: "Baño",
-    devices: ["Luz Principal", "Extracto Humedad"],
+    devices: [
+      { name: "Luz Principal", kind: "lamp" },
+      { name: "Extractor", kind: "air" },
+    ],
   },
   oficina: {
     name: "Oficina",
-    devices: ["Luz Principal", "Altavoz", "Cortinas"],
+    devices: [
+      { name: "Luz Principal", kind: "lamp" },
+      { name: "Parlante", kind: "speaker" },
+      { name: "Persiana", kind: "blind" },
+    ],
   },
   garaje: {
     name: "Garaje",
-    devices: ["Luz Principal", "Puerta", "Timbre"],
+    devices: [
+      { name: "Luz Principal", kind: "lamp" },
+      { name: "Puerta automática", kind: "door" },
+    ],
   },
   jardin: {
     name: "Jardín",
-    devices: ["Luz Principal", "Riego", "Timbre"],
+    devices: [
+      { name: "Luz Principal", kind: "lamp" },
+      { name: "Aspersor", kind: "sprinkler" },
+    ],
   },
   terraza: {
     name: "Terraza",
-    devices: ["Luz Principal", "Altavoz", "Cortinas"],
+    devices: [
+      { name: "Luz Principal", kind: "lamp" },
+      { name: "Parlante", kind: "speaker" },
+      { name: "Persiana", kind: "blind" },
+    ],
   },
 };
 
 const createSceneDevice = (
   spaceId: string,
   deviceIndex: number,
-  status: "on" | "off",
-  brightness?: number,
-): SceneDeviceConfig => ({
-  id: `${spaceId}-${deviceIndex}-${status}-${brightness ?? "na"}`,
-  spaceId,
-  spaceName: sceneSpaceCatalog[spaceId]?.name || "Espacio",
-  deviceIndex,
-  deviceName:
-    sceneSpaceCatalog[spaceId]?.devices[deviceIndex] ||
-    `Dispositivo ${deviceIndex + 1}`,
-  status,
-  brightness,
-});
+  status: Device["status"],
+  overrides: Partial<Device> = {},
+): SceneDeviceConfig => {
+  const definition = sceneSpaceCatalog[spaceId]?.devices[deviceIndex];
+  const name = definition?.name || `Dispositivo ${deviceIndex + 1}`;
+  const kind = definition?.kind || "lamp";
+  const id = `${spaceId}-${deviceIndex}`;
+  const baseDevice = createDevice(
+    id,
+    name,
+    kind,
+    status,
+    kind === "lamp" ? 80 : undefined,
+  );
+
+  return {
+    ...baseDevice,
+    ...overrides,
+    id,
+    name,
+    kind,
+    spaceId,
+    spaceName: sceneSpaceCatalog[spaceId]?.name || "Espacio",
+    deviceIndex,
+    deviceName: name,
+  };
+};
 
 const defaultScenes: Scene[] = [
   {
@@ -174,9 +226,13 @@ const defaultScenes: Scene[] = [
     description: "Luces bajas, temperatura óptima",
     isActive: true,
     devices: [
-      createSceneDevice("dormitorio", 0, "on", 25),
-      createSceneDevice("dormitorio", 3, "on"),
-      createSceneDevice("sala", 1, "on", 20),
+      createSceneDevice("dormitorio", 0, "on", { brightness: 25 }),
+      createSceneDevice("dormitorio", 3, "on", {
+        targetTemp: 22,
+        acMode: "cool",
+        fanSpeed: "low",
+      }),
+      createSceneDevice("sala", 1, "on", { brightness: 20 }),
     ],
   },
   {
@@ -186,9 +242,12 @@ const defaultScenes: Scene[] = [
     description: "Luces graduales, café encendido",
     isActive: false,
     devices: [
-      createSceneDevice("cocina", 0, "on", 85),
-      createSceneDevice("sala", 0, "on", 65),
-      createSceneDevice("cocina", 1, "on"),
+      createSceneDevice("cocina", 0, "on", { brightness: 85 }),
+      createSceneDevice("sala", 0, "on", { brightness: 65 }),
+      createSceneDevice("cocina", 1, "on", {
+        ovenTemp: 180,
+        ovenMode: "convection",
+      }),
     ],
   },
   {
@@ -200,8 +259,8 @@ const defaultScenes: Scene[] = [
     devices: [
       createSceneDevice("sala", 0, "off"),
       createSceneDevice("sala", 1, "off"),
-      createSceneDevice("sala", 2, "on"),
-      createSceneDevice("sala", 3, "on"),
+      createSceneDevice("sala", 2, "on", { volume: 35 }),
+      createSceneDevice("sala", 3, "off", { position: 0 }),
     ],
   },
   {
@@ -211,9 +270,9 @@ const defaultScenes: Scene[] = [
     description: "Luces de colores, altavoces",
     isActive: false,
     devices: [
-      createSceneDevice("terraza", 1, "on"),
-      createSceneDevice("sala", 2, "on"),
-      createSceneDevice("terraza", 0, "on", 90),
+      createSceneDevice("terraza", 1, "on", { volume: 78 }),
+      createSceneDevice("sala", 2, "on", { volume: 65 }),
+      createSceneDevice("terraza", 0, "on", { brightness: 90 }),
     ],
   },
 ];
@@ -227,7 +286,8 @@ const buildSceneDevices = (
     ...attribute,
     spaceName: sceneSpaceCatalog[attribute.spaceId]?.name || "Espacio",
     deviceName:
-      sceneSpaceCatalog[attribute.spaceId]?.devices[attribute.deviceIndex] ||
+      attribute.name ||
+      sceneSpaceCatalog[attribute.spaceId]?.devices[attribute.deviceIndex]?.name ||
       `Dispositivo ${attribute.deviceIndex + 1}`,
   }));
 
@@ -373,13 +433,7 @@ export function Escenas() {
     name: scene.name,
     color: scene.sceneType,
     description: scene.description,
-    devices: scene.devices.map((device) => ({
-      id: `${device.spaceId}-${device.deviceIndex}`,
-      spaceId: device.spaceId,
-      deviceIndex: device.deviceIndex,
-      status: device.status,
-      brightness: device.brightness,
-    })),
+    devices: scene.devices.map((device) => ({ ...device })),
   });
 
   const handleSceneCardKeyDown = (
@@ -677,26 +731,29 @@ export function Escenas() {
                                   key={device.id}
                                   className="rounded-[18px] border border-[#232c3d] bg-[#141a26] p-3"
                                 >
+                                  {(() => {
+                                    const isActive = isDeviceActive(device);
+
+                                    return (
                                   <div className="flex items-center justify-between gap-3">
                                     <div>
                                       <p className="font-medium text-white">{device.deviceName}</p>
                                       <p className="mt-1 text-sm text-[#98a2b7]">
-                                        {device.status === "on" ? "Encendido" : "Apagado"}
-                                        {device.status === "on" && device.brightness !== undefined
-                                          ? ` · ${device.brightness}%`
-                                          : ""}
+                                        {getDeviceSummary(device)}
                                       </p>
                                     </div>
                                     <span
                                       className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                                        device.status === "on"
+                                        isActive
                                           ? "border-[#d6a339]/40 bg-[#15120b] text-[#f4c95d]"
                                           : "border-[#2b3548] bg-[#151b28] text-[#cdd4e2]"
                                       }`}
                                     >
-                                      {device.status === "on" ? "ON" : "OFF"}
+                                      {isActive ? "ON" : "OFF"}
                                     </span>
                                   </div>
+                                    );
+                                  })()}
                                 </div>
                               ))}
                             </div>
