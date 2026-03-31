@@ -27,7 +27,10 @@ import { toast } from "sonner";
 import { getAccountInitials, useAccount } from "../context/account-context";
 import {
   alarmModeLabels,
+  type AcFanSpeed,
+  type AcMode,
   getDeviceIcon,
+  type Device,
   type HomeShortcut,
   getSpaceIcon,
   type HomeShortcutKind,
@@ -38,6 +41,7 @@ import {
 } from "../context/home-context";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { AlarmModal } from "./AlarmModal";
+import { DeviceDetailControls } from "./DeviceDetailControls";
 import {
   Dialog,
   DialogContent,
@@ -62,6 +66,9 @@ export function Espacios() {
     temperature: number;
     fanSpeed: number;
     airMode: "Frio" | "Calor" | "Ventilacion";
+    acMode?: AcMode;
+    acFanSpeed?: AcFanSpeed;
+    swing?: boolean;
     doorMode: "Cerrar" | "Abrir" | "Bloquear" | "Desbloquear";
   };
 
@@ -264,6 +271,9 @@ export function Espacios() {
         temperature: 22,
         fanSpeed: 2,
         airMode: "Frio",
+        acMode: "cool",
+        acFanSpeed: "med",
+        swing: false,
         doorMode: "Abrir",
       };
     }
@@ -278,6 +288,9 @@ export function Espacios() {
         temperature: 23,
         fanSpeed: 3,
         airMode: "Frio",
+        acMode: "cool",
+        acFanSpeed: "med",
+        swing: false,
         doorMode: "Abrir",
       };
     }
@@ -292,6 +305,9 @@ export function Espacios() {
         temperature: 0,
         fanSpeed: 0,
         airMode: "Frio",
+        acMode: "cool",
+        acFanSpeed: "auto",
+        swing: false,
         doorMode: "Cerrar",
       };
     }
@@ -305,6 +321,9 @@ export function Espacios() {
       temperature: 0,
       fanSpeed: 0,
       airMode: "Frio",
+      acMode: "cool",
+      acFanSpeed: "auto",
+      swing: false,
       doorMode: "Abrir",
     };
   };
@@ -1248,19 +1267,31 @@ export function Espacios() {
           if (!open) setActiveShortcut(null);
         }}
       >
-        <DialogContent className="w-[min(92vw,520px)] rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
-          <div className="relative overflow-hidden rounded-[32px]">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] w-[min(92vw,520px)] flex-col overflow-hidden rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] [&>button]:hidden">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-[32px]">
             <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#f4bd49_0%,rgba(244,189,73,0.2)_26%,transparent_70%)]" />
             <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6 sm:px-8">
-              <DialogTitle className="text-[24px] font-semibold text-white">
-                {activeShortcut?.name}
-              </DialogTitle>
-              <DialogDescription className="mt-2 text-sm text-[#7f879c]">
-                Configurá encendido y atributos del shortcut.
-              </DialogDescription>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <DialogTitle className="text-[24px] font-semibold text-white">
+                    {activeShortcut?.name}
+                  </DialogTitle>
+                  <DialogDescription className="mt-2 text-sm text-[#7f879c]">
+                    Configurá encendido y atributos del shortcut.
+                  </DialogDescription>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveShortcut(null)}
+                  aria-label="Cerrar"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
-            <div className="relative space-y-6 px-6 pb-8 pt-6 sm:px-8">
+            <div className="relative min-h-0 flex-1 space-y-6 overflow-y-auto px-6 pb-8 pt-6 sm:px-8">
               {activeShortcut ? (
                 (() => {
                   const control =
@@ -1269,23 +1300,25 @@ export function Espacios() {
 
                   return (
                     <>
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateShortcutControl(activeShortcut.id, {
-                              on: !control.on,
-                            })
-                          }
-                          className={`w-full rounded-[18px] border px-4 py-3 text-sm font-medium transition-colors ${
-                            control.on
-                              ? "border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]"
-                              : "border-[#2b3448] bg-[#151b28] text-[#717a8f]"
-                          }`}
-                        >
-                          {control.on ? "Apagar" : "Prender"}
-                        </button>
-                      </div>
+                      {activeShortcut.kind !== "blind" && activeShortcut.kind !== "air" ? (
+                        <div className="flex gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateShortcutControl(activeShortcut.id, {
+                                on: !control.on,
+                              })
+                            }
+                            className={`w-full rounded-[18px] border px-4 py-3 text-sm font-medium transition-colors ${
+                              control.on
+                                ? "border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]"
+                                : "border-[#2b3448] bg-[#151b28] text-[#717a8f]"
+                            }`}
+                          >
+                            {control.on ? "Apagar" : "Prender"}
+                          </button>
+                        </div>
+                      ) : null}
 
                       {activeShortcut.kind === "speaker" ? (
                         <>
@@ -1328,108 +1361,75 @@ export function Espacios() {
                       ) : null}
 
                       {activeShortcut.kind === "blind" ? (
-                        <>
-                          <div className="space-y-2">
-                            <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                              Apertura: {control.position}%
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={100}
-                              value={control.position}
-                              onChange={(event) =>
-                                updateShortcutControl(activeShortcut.id, {
-                                  position: Number(event.target.value),
-                                })
-                              }
-                              className="w-full accent-[#f4bd49]"
-                            />
-                          </div>
-
-                          <div className="space-y-2">
-                            <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                              Inclinación: {control.slat}%
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={100}
-                              value={control.slat}
-                              onChange={(event) =>
-                                updateShortcutControl(activeShortcut.id, {
-                                  slat: Number(event.target.value),
-                                })
-                              }
-                              className="w-full accent-[#f4bd49]"
-                            />
-                          </div>
-                        </>
+                        <DeviceDetailControls
+                          device={{
+                            id: activeShortcut.id,
+                            name: activeShortcut.name,
+                            kind: "blind",
+                            status: control.position > 0 ? "on" : "off",
+                            position: control.position,
+                          } satisfies Device}
+                          onUpdate={(updates) => {
+                            if (typeof updates.position === "number") {
+                              updateShortcutControl(activeShortcut.id, {
+                                position: updates.position,
+                                on: updates.position > 0,
+                              });
+                            }
+                          }}
+                        />
                       ) : null}
 
                       {activeShortcut.kind === "air" ? (
-                        <>
-                          <div className="space-y-2">
-                            <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                              Temperatura: {control.temperature}°C
-                            </label>
-                            <input
-                              type="range"
-                              min={16}
-                              max={30}
-                              value={control.temperature}
-                              onChange={(event) =>
-                                updateShortcutControl(activeShortcut.id, {
-                                  temperature: Number(event.target.value),
-                                })
-                              }
-                              className="w-full accent-[#f4bd49]"
-                            />
-                          </div>
+                        <DeviceDetailControls
+                          device={{
+                            id: activeShortcut.id,
+                            name: activeShortcut.name,
+                            kind: "air",
+                            status: control.on ? "on" : "off",
+                            targetTemp: control.temperature,
+                            fanSpeed:
+                              control.acFanSpeed ??
+                              (control.fanSpeed <= 1
+                                ? "low"
+                                : control.fanSpeed === 2
+                                  ? "med"
+                                  : control.fanSpeed >= 4
+                                    ? "high"
+                                    : "auto"),
+                            acMode:
+                              control.acMode ??
+                              (control.airMode === "Calor"
+                                ? "heat"
+                                : control.airMode === "Ventilacion"
+                                  ? "fan"
+                                  : "cool"),
+                            swing: control.swing ?? false,
+                          } satisfies Device}
+                          onUpdate={(updates) => {
+                            const patch: Partial<ShortcutControlState> = {};
 
-                          <div className="space-y-2">
-                            <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                              Intensidad: {control.fanSpeed}
-                            </label>
-                            <input
-                              type="range"
-                              min={1}
-                              max={5}
-                              value={control.fanSpeed}
-                              onChange={(event) =>
-                                updateShortcutControl(activeShortcut.id, {
-                                  fanSpeed: Number(event.target.value),
-                                })
-                              }
-                              className="w-full accent-[#f4bd49]"
-                            />
-                          </div>
+                            if (typeof updates.targetTemp === "number") {
+                              patch.temperature = updates.targetTemp;
+                            }
 
-                          <div className="grid grid-cols-3 gap-2">
-                            {(["Frio", "Calor", "Ventilacion"] as const).map((mode) => {
-                              const isSelected = control.airMode === mode;
+                            if (typeof updates.fanSpeed === "string") {
+                              patch.acFanSpeed = updates.fanSpeed;
+                            }
 
-                              return (
-                                <button
-                                  key={mode}
-                                  type="button"
-                                  onClick={() =>
-                                    updateShortcutControl(activeShortcut.id, {
-                                      airMode: mode,
-                                    })
-                                  }
-                                  className={`rounded-[14px] border px-3 py-2 text-xs transition-colors ${
-                                    isSelected
-                                      ? "border-[#f4bd49]/70 bg-[#15110a] text-[#f4bd49]"
-                                      : "border-[#202636] bg-[#171b26] text-[#aab3c8]"
-                                  }`}
-                                >
-                                  {mode}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </>
+                            if (typeof updates.acMode === "string") {
+                              patch.acMode = updates.acMode;
+                            }
+
+                            if (typeof updates.swing === "boolean") {
+                              patch.swing = updates.swing;
+                            }
+
+                            if (Object.keys(patch).length > 0) {
+                              updateShortcutControl(activeShortcut.id, patch);
+                            }
+                          }}
+                        />
                       ) : null}
 
                       <button
@@ -1458,12 +1458,24 @@ export function Espacios() {
           <div className="relative overflow-hidden rounded-[32px]">
             <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,#f4bd49_0%,rgba(244,189,73,0.2)_26%,transparent_70%)]" />
             <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6">
-              <DialogTitle className="text-[24px] font-semibold text-white">
-                Control de puerta
-              </DialogTitle>
-              <DialogDescription className="mt-2 text-sm text-[#7f879c]">
-                Elegí la acción para este shortcut.
-              </DialogDescription>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <DialogTitle className="text-[24px] font-semibold text-white">
+                    Control de puerta
+                  </DialogTitle>
+                  <DialogDescription className="mt-2 text-sm text-[#7f879c]">
+                    Elegí la acción para este shortcut.
+                  </DialogDescription>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveDoorShortcut(null)}
+                  aria-label="Cerrar"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
+                >
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             <div className="relative space-y-4 px-6 pb-6 pt-5">

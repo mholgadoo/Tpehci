@@ -31,6 +31,23 @@ import {
 } from "../context/home-context";
 import { useIsMobile } from "../hooks/useIsMobile";
 import { DeviceDetailControls } from "./DeviceDetailControls";
+
+const DEFAULT_LAMP_ACCENT = "#f4c95d";
+
+const normalizeLampAccent = (value?: string) => {
+  if (typeof value !== "string") return DEFAULT_LAMP_ACCENT;
+  const normalized = value.trim().toLowerCase();
+  return /^#[0-9a-f]{6}$/.test(normalized) ? normalized : DEFAULT_LAMP_ACCENT;
+};
+
+const toRgba = (hexColor: string, alpha: number) => {
+  const normalized = normalizeLampAccent(hexColor);
+  const r = Number.parseInt(normalized.slice(1, 3), 16);
+  const g = Number.parseInt(normalized.slice(3, 5), 16);
+  const b = Number.parseInt(normalized.slice(5, 7), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
  
 export function SpaceDetail() {
   const { homeId, spaceId } = useParams<{ homeId?: string; spaceId: string }>();
@@ -233,10 +250,90 @@ export function SpaceDetail() {
   const renderDeviceDetailsModal = () => {
     if (!selectedDevice) return null;
 
+    if (selectedDevice.kind === "door") {
+      const currentMode = selectedDevice.doorMode ?? (selectedDevice.status === "on" ? "Cerrar" : "Abrir");
+
+      return (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 p-4"
+          onClick={handleCloseDeviceDetails}
+        >
+          <div
+            className="w-full max-w-[460px]"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="relative overflow-hidden rounded-[32px] border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)]">
+              <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,#f4bd49_0%,rgba(244,189,73,0.2)_26%,transparent_70%)]" />
+              <div className="relative border-b border-[#1f2432] px-6 pb-4 pt-6">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-[24px] font-semibold text-white">Control de puerta</h2>
+                    <p className="mt-2 text-sm text-[#7f879c]">
+                      Elegí la acción para este dispositivo.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCloseDeviceDetails}
+                    aria-label="Cerrar"
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="relative space-y-4 px-6 pb-6 pt-5">
+                <div className="grid grid-cols-2 gap-3">
+                  {(["Cerrar", "Abrir", "Bloquear", "Desbloquear"] as const).map((mode) => {
+                    const isSelected = currentMode === mode;
+
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => {
+                          if (!home || !space) return;
+
+                          updateDeviceProperty(home.id, space.id, selectedDevice.id, {
+                            doorMode: mode,
+                            status: mode === "Cerrar" || mode === "Bloquear" ? "on" : "off",
+                          });
+                        }}
+                        className={`rounded-[16px] border px-3 py-3 text-sm font-medium transition-colors ${
+                          isSelected
+                            ? "border-[#f4bd49]/70 bg-[#15110a] text-[#f4bd49]"
+                            : "border-[#202636] bg-[#171b26] text-[#aab3c8]"
+                        }`}
+                      >
+                        {mode}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleCloseDeviceDetails}
+                  className="w-full rounded-[18px] border border-[#2b3548] bg-[#141a26] px-4 py-3 text-sm font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
+                >
+                  Cerrar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const deviceType = deviceOptions[selectedDevice.kind].type;
     const isOn = isDeviceVisuallyOn(selectedDevice);
     const deviceLabel = deviceOptions[selectedDevice.kind].label;
     const deviceSummary = getDeviceSummary(selectedDevice);
+    const modalGlowColor =
+      selectedDevice.kind === "lamp"
+        ? normalizeLampAccent(selectedDevice.lampColor)
+        : "#fbbf24";
 
     return (
       <>
@@ -248,7 +345,12 @@ export function SpaceDetail() {
             className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-[560px] flex-col overflow-hidden rounded-[32px] bg-[#080a10] shadow-[0_24px_80px_rgba(0,0,0,0.6)]"
             onClick={(event) => event.stopPropagation()}
           >
-            <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,#fbbf24_0%,rgba(251,191,36,0.22)_26%,transparent_70%)]" />
+            <div
+              className="absolute inset-x-0 top-0 h-28"
+              style={{
+                background: `radial-gradient(circle at top, ${modalGlowColor} 0%, ${toRgba(modalGlowColor, 0.22)} 26%, transparent 70%)`,
+              }}
+            />
  
             <div className="relative shrink-0 border-b border-[#1f2432] px-6 pb-5 pt-8 sm:px-8">
               <div className="flex items-center justify-between gap-4">
@@ -469,15 +571,25 @@ export function SpaceDetail() {
                     >
                       {getDeviceIcon(device.kind, 20)}
                     </div>
-                    <div>
-                      <h3 className="text-[15px] font-medium text-white mb-0.5">{device.name}</h3>
-                      <p
-                        className={`text-[13px] ${
-                          isDeviceVisuallyOn(device) ? "text-[#fbbf24]" : "text-[#6b7280]"
-                        }`}
-                      >
-                        {getDeviceSummary(device)}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <h3 className="text-[15px] font-medium text-white">{device.name}</h3>
+                        <p
+                          className={`text-[13px] ${
+                            isDeviceVisuallyOn(device) ? "text-[#fbbf24]" : "text-[#6b7280]"
+                          }`}
+                        >
+                          {getDeviceSummary(device)}
+                        </p>
+                      </div>
+                      {device.kind === "lamp" ? (
+                        <span
+                          className="inline-block h-4 w-4 rounded-full border border-white/50"
+                          style={{ backgroundColor: normalizeLampAccent(device.lampColor) }}
+                          aria-label={`Color de ${device.name}`}
+                          title={`Color ${normalizeLampAccent(device.lampColor)}`}
+                        />
+                      ) : null}
                     </div>
                   </div>
  

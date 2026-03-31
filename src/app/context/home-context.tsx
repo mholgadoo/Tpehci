@@ -74,6 +74,7 @@ export type AlarmMode =
   | "armed_away"
   | "armed_home"
   | "armed_night";
+export type DoorMode = "Cerrar" | "Abrir" | "Bloquear" | "Desbloquear";
 export type HomeShortcutKind =
   | "alarm"
   | "speaker"
@@ -90,6 +91,7 @@ export interface Device {
   kind: DeviceKind;
   status: DeviceStatus;
   brightness?: number;
+  lampColor?: string;
   targetTemp?: number;
   fanSpeed?: AcFanSpeed;
   acMode?: AcMode;
@@ -101,6 +103,7 @@ export interface Device {
   volume?: number;
   fridgeTemp?: number;
   freezerTemp?: number;
+  doorMode?: DoorMode;
 }
 
 export interface AlarmZone {
@@ -155,6 +158,13 @@ const clamp = (value: number, min: number, max: number) =>
 
 const roundToStep = (value: number, step: number) =>
   Math.round(value / step) * step;
+
+const normalizeLampColor = (value?: string) => {
+  if (typeof value !== "string") return "#f4c95d";
+
+  const normalized = value.trim().toLowerCase();
+  return /^#[0-9a-f]{6}$/.test(normalized) ? normalized : "#f4c95d";
+};
 
 const normalizeTextId = (value: string) =>
   value
@@ -335,6 +345,7 @@ function normalizeDeviceByKind(device: Device): Device {
       return {
         ...base,
         brightness: clamp(base.brightness ?? 80, 0, 100),
+        lampColor: normalizeLampColor(base.lampColor),
       };
     case "air":
       return {
@@ -364,6 +375,17 @@ function normalizeDeviceByKind(device: Device): Device {
         ...base,
         volume: clamp(base.volume ?? 50, 0, 100),
       };
+    case "door": {
+      const fallbackMode = base.status === "on" ? "Cerrar" : "Abrir";
+      const currentMode = base.doorMode ?? fallbackMode;
+      const isClosed = currentMode === "Cerrar" || currentMode === "Bloquear";
+
+      return {
+        ...base,
+        doorMode: currentMode,
+        status: isClosed ? "on" : "off",
+      };
+    }
     case "fridge":
       return {
         ...base,
@@ -437,6 +459,8 @@ export function getDeviceSummary(device: Device) {
     case "fridge":
       if (device.status === "off") return "Apagado";
       return `${device.fridgeTemp ?? 4}°C · Freezer ${device.freezerTemp ?? -18}°C`;
+    case "door":
+      return device.doorMode ?? (device.status === "on" ? "Cerrar" : "Abrir");
     default:
       return device.status === "on" ? "Encendido" : "Apagado";
   }
@@ -753,6 +777,14 @@ function buildUpdatedDevice(device: Device, updates: Partial<Device>) {
     return {
       ...merged,
       status: (merged.position ?? 0) > 0 ? "on" : "off",
+    };
+  }
+
+  if (device.kind === "door" && updates.doorMode !== undefined) {
+    const isClosed = updates.doorMode === "Cerrar" || updates.doorMode === "Bloquear";
+    return {
+      ...merged,
+      status: isClosed ? "on" : "off",
     };
   }
 

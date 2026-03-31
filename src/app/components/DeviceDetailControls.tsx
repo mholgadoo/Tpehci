@@ -1,6 +1,7 @@
 import {
   Flame,
   Minus,
+  Palette,
   Snowflake,
   Volume,
   Volume1,
@@ -21,6 +22,8 @@ import {
   type Device,
   type OvenMode,
 } from "../context/home-context";
+import { useEffect, useMemo, useState } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Slider } from "./ui/slider";
 import { Switch } from "./ui/switch";
 
@@ -125,6 +128,7 @@ function Range({
   step = 1,
   onChange,
   labels,
+  accentColor,
 }: {
   value: number;
   min: number;
@@ -132,7 +136,16 @@ function Range({
   step?: number;
   onChange: (nextValue: number) => void;
   labels?: [string, string];
+  accentColor?: string;
 }) {
+  const sliderStyle = accentColor
+    ? ({ "--accent-color": accentColor } as React.CSSProperties)
+    : undefined;
+
+  const sliderClassName = accentColor
+    ? "[&_[data-slot=slider-range]]:bg-[var(--accent-color)] [&_[data-slot=slider-thumb]]:border-[var(--accent-color)] [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-track]]:bg-[#263144]"
+    : "[&_[data-slot=slider-range]]:bg-[#f0c45c] [&_[data-slot=slider-thumb]]:border-[#f0c45c] [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-track]]:bg-[#263144]";
+
   return (
     <div>
       <Slider
@@ -145,7 +158,8 @@ function Range({
             onChange(nextValue);
           }
         }}
-        className="[&_[data-slot=slider-range]]:bg-[#f0c45c] [&_[data-slot=slider-thumb]]:border-[#f0c45c] [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-track]]:bg-[#263144]"
+        style={sliderStyle}
+        className={sliderClassName}
       />
       {labels ? (
         <div className="mt-2 flex justify-between text-xs text-[#7f879c]">
@@ -250,14 +264,70 @@ function BlindPreview({ position = 0 }: { position?: number }) {
   );
 }
 
+type RgbColor = { r: number; g: number; b: number };
+
+function channelToHex(value: number) {
+  return Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, "0");
+}
+
+function rgbToHex({ r, g, b }: RgbColor) {
+  return `#${channelToHex(r)}${channelToHex(g)}${channelToHex(b)}`;
+}
+
+function hexToRgb(value: string): RgbColor | null {
+  const normalized = value.trim().toLowerCase();
+  const match = /^#([0-9a-f]{6})$/.exec(normalized);
+  if (!match) return null;
+
+  return {
+    r: Number.parseInt(match[1].slice(0, 2), 16),
+    g: Number.parseInt(match[1].slice(2, 4), 16),
+    b: Number.parseInt(match[1].slice(4, 6), 16),
+  };
+}
+
 function LampControls({
   brightness = 0,
+  lampColor = "#f4c95d",
   onUpdate,
 }: {
   brightness?: number;
+  lampColor?: string;
   onUpdate: (updates: Partial<Device>) => void;
 }) {
   const nextBrightness = brightness ?? 0;
+  const normalizedLampColor = /^#[0-9a-f]{6}$/i.test(lampColor)
+    ? lampColor.toLowerCase()
+    : "#f4c95d";
+  const [draftColor, setDraftColor] = useState(normalizedLampColor);
+  const presetLampColors = [
+    "#ffd27f",
+    "#e6f1ff",
+    "#ff8c00",
+    "#ff3b30",
+    "#af52de",
+    "#007aff",
+    "#34c759",
+    "#32ade6",
+  ];
+  const draftRgb = useMemo(() => hexToRgb(draftColor) ?? { r: 244, g: 201, b: 93 }, [draftColor]);
+
+  useEffect(() => {
+    setDraftColor(normalizedLampColor);
+  }, [normalizedLampColor]);
+
+  const updateDraftColor = (nextColor: string) => {
+    setDraftColor(nextColor);
+    onUpdate({ lampColor: nextColor });
+  };
+
+  const updateColorChannel = (channel: keyof RgbColor, value: number) => {
+    const nextRgb: RgbColor = {
+      ...draftRgb,
+      [channel]: value,
+    };
+    updateDraftColor(rgbToHex(nextRgb));
+  };
 
   return (
     <Section
@@ -265,12 +335,134 @@ function LampControls({
       description="Ajustá la luz ambiente sin salir del detalle."
     >
       <div className="grid gap-4 sm:grid-cols-[auto,1fr] sm:items-center">
-        <Stepper
-          onDecrease={() => onUpdate({ brightness: Math.max(0, nextBrightness - 5) })}
-          onIncrease={() => onUpdate({ brightness: Math.min(100, nextBrightness + 5) })}
-          decreaseDisabled={nextBrightness <= 0}
-          increaseDisabled={nextBrightness >= 100}
-        />
+        <div className="flex items-center gap-3">
+          <Stepper
+            onDecrease={() => onUpdate({ brightness: Math.max(0, nextBrightness - 5) })}
+            onIncrease={() => onUpdate({ brightness: Math.min(100, nextBrightness + 5) })}
+            decreaseDisabled={nextBrightness <= 0}
+            increaseDisabled={nextBrightness >= 100}
+          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="relative flex h-12 w-12 items-center justify-center rounded-[16px] border border-[#2d3749] bg-[#121a27] text-[#dce3f0] transition-colors hover:border-[#f0c45c]/60"
+                title="Cambiar color"
+                aria-label="Cambiar color de la lámpara"
+              >
+                <Palette size={18} />
+                <span
+                  className="pointer-events-none absolute bottom-1 right-1 h-3 w-3 rounded-full border border-white/60"
+                  style={{ backgroundColor: normalizedLampColor }}
+                />
+              </button>
+            </PopoverTrigger>
+
+            <PopoverContent
+              align="start"
+              sideOffset={10}
+              className="w-[248px] rounded-[20px] border border-[#2b3042] bg-[#101520]/96 p-3 text-white shadow-[0_20px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7f879c]">
+                Color de luz
+              </p>
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {presetLampColors.map((color) => {
+                  const isSelected = normalizedLampColor === color;
+
+                  return (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => updateDraftColor(color)}
+                      className={`h-9 w-9 rounded-[12px] border transition-transform hover:scale-[1.04] ${
+                        isSelected
+                          ? "border-[#f4c95d] ring-1 ring-[#f4c95d]/70"
+                          : "border-[#2d3749]"
+                      }`}
+                      style={{ backgroundColor: color }}
+                      aria-label={`Seleccionar color ${color}`}
+                    />
+                  );
+                })}
+              </div>
+
+              <div className="mt-3 rounded-[14px] border border-[#2d3749] bg-[#121a27] p-3">
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="text-sm text-[#c6cedd]">Personalizado</span>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-5 w-5 rounded-full border border-white/50"
+                      style={{ backgroundColor: draftColor }}
+                    />
+                    <span className="text-xs font-medium uppercase tracking-[0.08em] text-[#98a2b7]">
+                      {draftColor}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-xs text-[#98a2b7]">
+                      <span>R</span>
+                      <span>{draftRgb.r}</span>
+                    </div>
+                    <Slider
+                      value={[draftRgb.r]}
+                      min={0}
+                      max={255}
+                      step={1}
+                      onValueChange={([value]) => {
+                        if (typeof value === "number") {
+                          updateColorChannel("r", value);
+                        }
+                      }}
+                      className="[&_[data-slot=slider-range]]:bg-[#f87171] [&_[data-slot=slider-thumb]]:border-[#f87171] [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-track]]:bg-[#2a3347]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-xs text-[#98a2b7]">
+                      <span>G</span>
+                      <span>{draftRgb.g}</span>
+                    </div>
+                    <Slider
+                      value={[draftRgb.g]}
+                      min={0}
+                      max={255}
+                      step={1}
+                      onValueChange={([value]) => {
+                        if (typeof value === "number") {
+                          updateColorChannel("g", value);
+                        }
+                      }}
+                      className="[&_[data-slot=slider-range]]:bg-[#4ade80] [&_[data-slot=slider-thumb]]:border-[#4ade80] [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-track]]:bg-[#2a3347]"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-xs text-[#98a2b7]">
+                      <span>B</span>
+                      <span>{draftRgb.b}</span>
+                    </div>
+                    <Slider
+                      value={[draftRgb.b]}
+                      min={0}
+                      max={255}
+                      step={1}
+                      onValueChange={([value]) => {
+                        if (typeof value === "number") {
+                          updateColorChannel("b", value);
+                        }
+                      }}
+                      className="[&_[data-slot=slider-range]]:bg-[#60a5fa] [&_[data-slot=slider-thumb]]:border-[#60a5fa] [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-track]]:bg-[#2a3347]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
         <DisplayValue value={nextBrightness} suffix="%" />
       </div>
       <div className="mt-4">
@@ -280,6 +472,7 @@ function LampControls({
           max={100}
           onChange={(value) => onUpdate({ brightness: value })}
           labels={["Suave", "Máxima"]}
+          accentColor={normalizedLampColor}
         />
       </div>
     </Section>
@@ -571,6 +764,7 @@ export function DeviceDetailControls({
       return (
         <LampControls
           brightness={device.brightness}
+          lampColor={device.lampColor}
           onUpdate={onUpdate}
         />
       );

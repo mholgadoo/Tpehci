@@ -588,7 +588,7 @@ export function Escenas() {
               <div className="relative border-b border-[#20283a] px-5 pb-5 pt-6 sm:px-8">
                 <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(240,196,92,0.38),rgba(240,196,92,0.08)_35%,transparent_70%)]" />
                 <div className="relative">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                     <div className="flex min-w-0 items-start gap-4">
                       <div
                         className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] border ${
@@ -612,7 +612,7 @@ export function Escenas() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex w-full items-center justify-between gap-3 lg:w-auto lg:justify-end">
                       <span
                         className={`rounded-full border px-3 py-2 text-sm font-medium ${
                           selectedScene.isActive
