@@ -29,7 +29,7 @@ import {
   type Device,
   type DeviceKind,
 } from "../context/home-context";
-import { useIsMobile } from "../hooks/useIsMobile";
+import { COMPACT_LAYOUT_BREAKPOINT, useIsMobile } from "../hooks/useIsMobile";
 import { DeviceDetailControls } from "./DeviceDetailControls";
 
 const DEFAULT_LAMP_ACCENT = "#f4c95d";
@@ -52,7 +52,7 @@ const toRgba = (hexColor: string, alpha: number) => {
 export function SpaceDetail() {
   const { homeId, spaceId } = useParams<{ homeId?: string; spaceId: string }>();
   const navigate = useNavigate();
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(COMPACT_LAYOUT_BREAKPOINT);
   const {
     homes,
     selectedHomeId,
@@ -63,6 +63,7 @@ export function SpaceDetail() {
     turnOffAllDevices,
     addDevice,
     deleteDevice,
+    deleteSpace,
   } = useHome();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newDeviceName, setNewDeviceName] = useState("");
@@ -70,6 +71,7 @@ export function SpaceDetail() {
   const [deviceNameError, setDeviceNameError] = useState(false);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isDeleteSpaceConfirmOpen, setIsDeleteSpaceConfirmOpen] = useState(false);
  
   useEffect(() => {
     if (homeId && homeId !== selectedHomeId) {
@@ -146,6 +148,14 @@ export function SpaceDetail() {
  
     deleteDevice(home.id, space.id, selectedDevice.id);
     handleCloseDeviceDetails();
+  };
+
+  const handleDeleteSpace = () => {
+    if (!home || !space) return;
+
+    deleteSpace(home.id, space.id);
+    setIsDeleteSpaceConfirmOpen(false);
+    navigate("/");
   };
  
   const renderDeviceModal = () => {
@@ -512,18 +522,42 @@ export function SpaceDetail() {
  
   return (
     <>
-      <div className="min-h-screen bg-[#000000] text-white pb-20 md:pb-8">
+      <div className={`min-h-screen bg-[#000000] text-white ${isMobile ? "pb-20" : "pb-8"}`}>
         <div className="px-6 pt-12 pb-6">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate("/")}
-                className="flex h-[48px] w-[48px] items-center justify-center rounded-[16px] border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
-              >
-                <ArrowLeft size={20} />
-              </button>
-              <div>
-                <h1 className="text-[24px] font-semibold text-white leading-tight md:text-[28px]">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label="Volver a Hogar"
+            className={`items-center gap-3 rounded-[18px] border border-[#2b3042] bg-[#151a25] px-4 py-3 text-[#d0d6e3] transition-colors hover:bg-[#1c2231] hover:text-white ${
+              isMobile ? "inline-flex sm:hidden" : "inline-flex"
+            }`}
+          >
+            <ArrowLeft size={18} />
+            <span className="text-[14px] font-medium">Hogar</span>
+          </button>
+
+          <div
+            className={`mb-8 flex items-center justify-between gap-4 ${
+              isMobile ? "mt-5 sm:mt-0" : "mt-5"
+            }`}
+          >
+            <div className="flex min-w-0 items-start gap-3">
+              {isMobile ? (
+                <button
+                  type="button"
+                  onClick={() => navigate("/")}
+                  aria-label="Volver a Hogar"
+                  className="hidden h-[46px] w-[46px] shrink-0 items-center justify-center rounded-[14px] border border-[#2b3042] bg-[#151a25] text-[#d0d6e3] transition-colors hover:bg-[#1c2231] hover:text-white sm:flex"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+              ) : null}
+
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7f879c]">
+                  Espacio
+                </p>
+                <h1 className="text-[24px] font-semibold leading-tight text-white md:text-[28px]">
                   {spaceName}
                 </h1>
                 <p className="mt-1 text-[15px] text-[#9aa3b8]">
@@ -531,8 +565,18 @@ export function SpaceDetail() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex shrink-0 items-center gap-3">
               <button
+                type="button"
+                onClick={() => setIsDeleteSpaceConfirmOpen(true)}
+                className="flex h-[46px] w-[46px] items-center justify-center rounded-[14px] border border-[#8f3949] bg-[#2a141a] text-[#ffb4c0] transition-colors hover:bg-[#341820]"
+                title="Eliminar espacio"
+                aria-label={`Eliminar espacio ${spaceName}`}
+              >
+                <Trash2 size={18} />
+              </button>
+              <button
+                type="button"
                 className="flex h-[46px] w-[46px] items-center justify-center rounded-[14px] border border-[#2b3042] bg-[#151a25] text-[#c4c8d6] transition-colors hover:bg-[#1c2231] hover:text-white"
                 onClick={() => {
                   if (home && space) turnOffAllDevices(home.id, space.id);
@@ -645,9 +689,35 @@ export function SpaceDetail() {
           Agregar dispositivo
         </button>
       ) : null}
- 
+
       {renderDeviceModal()}
       {renderDeviceDetailsModal()}
+
+      <AlertDialog open={isDeleteSpaceConfirmOpen} onOpenChange={setIsDeleteSpaceConfirmOpen}>
+        <AlertDialogContent className="max-w-[460px] rounded-[28px] border border-[#2b3042] bg-[#0f1219] p-6 text-white shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+          <AlertDialogHeader className="text-left">
+            <AlertDialogTitle className="text-[24px] text-white">
+              Eliminar espacio
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-[15px] leading-6 text-[#98a2b7]">
+              Vas a borrar <span className="font-medium text-white">{spaceName}</span> con todos sus dispositivos.
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="mt-2">
+            <AlertDialogCancel className="rounded-[18px] border border-[#2b3548] bg-[#141a26] text-[#d0d6e3] hover:bg-[#192131] hover:text-white">
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSpace}
+              className="rounded-[18px] border border-[#8f3949] bg-[#2a141a] text-[#ffb4c0] hover:bg-[#341820]"
+            >
+              Sí, eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

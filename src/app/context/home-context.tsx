@@ -75,6 +75,14 @@ export type AlarmMode =
   | "armed_home"
   | "armed_night";
 export type DoorMode = "Cerrar" | "Abrir" | "Bloquear" | "Desbloquear";
+export type SpeakerGenre =
+  | "classica"
+  | "country"
+  | "dance"
+  | "latina"
+  | "pop"
+  | "rock";
+export type SpeakerPlaybackState = "stopped" | "playing" | "paused";
 export type HomeShortcutKind =
   | "alarm"
   | "speaker"
@@ -101,9 +109,22 @@ export interface Device {
   timerMinutes?: number;
   position?: number;
   volume?: number;
+  speakerGenre?: SpeakerGenre;
+  speakerQueue?: SpeakerTrack[];
+  speakerTrackIndex?: number;
+  speakerPlaybackState?: SpeakerPlaybackState;
+  speakerProgressMs?: number;
+  speakerTimestamp?: number;
   fridgeTemp?: number;
   freezerTemp?: number;
   doorMode?: DoorMode;
+}
+
+export interface SpeakerTrack {
+  id: string;
+  title: string;
+  artist: string;
+  durationMs: number;
 }
 
 export interface AlarmZone {
@@ -334,6 +355,253 @@ export const alarmModeLabels: Record<AlarmMode, string> = {
   armed_night: "Modo noche",
 };
 
+export const speakerGenreLabels: Record<SpeakerGenre, string> = {
+  classica: "Clásica",
+  country: "Country",
+  dance: "Dance",
+  latina: "Latina",
+  pop: "Pop",
+  rock: "Rock",
+};
+
+export const speakerPlaybackStateLabels: Record<SpeakerPlaybackState, string> = {
+  stopped: "Detenido",
+  playing: "Reproduciendo",
+  paused: "Pausado",
+};
+
+const defaultSpeakerGenre: SpeakerGenre = "pop";
+
+const classicalSpeakerTracks: SpeakerTrack[] = [
+  {
+    id: "classica-1",
+    title: "Nocturne in E-flat Major, Op. 9 No. 2",
+    artist: "Frederic Chopin",
+    durationMs: 267000,
+  },
+  {
+    id: "classica-2",
+    title: "Swan Lake",
+    artist: "Pyotr Ilyich Tchaikovsky",
+    durationMs: 451000,
+  },
+  {
+    id: "classica-3",
+    title: "Caprice No. 24",
+    artist: "Niccolo Paganini",
+    durationMs: 322000,
+  },
+  {
+    id: "classica-4",
+    title: "The Four Seasons: Spring",
+    artist: "Antonio Vivaldi",
+    durationMs: 214000,
+  },
+];
+
+const countrySpeakerTracks: SpeakerTrack[] = [
+  {
+    id: "country-1",
+    title: "Route 17",
+    artist: "Mason Ridge",
+    durationMs: 204000,
+  },
+  {
+    id: "country-2",
+    title: "Dust and Neon",
+    artist: "June Carterly",
+    durationMs: 219000,
+  },
+  {
+    id: "country-3",
+    title: "Blue Frontier",
+    artist: "The Dry Hills",
+    durationMs: 231000,
+  },
+  {
+    id: "country-4",
+    title: "Sunday Whiskey",
+    artist: "Cole Harper",
+    durationMs: 214000,
+  },
+];
+
+const danceSpeakerTracks: SpeakerTrack[] = [
+  {
+    id: "dance-1",
+    title: "Pulse 98",
+    artist: "Nova Loop",
+    durationMs: 201000,
+  },
+  {
+    id: "dance-2",
+    title: "Afterlight",
+    artist: "Kira Volt",
+    durationMs: 223000,
+  },
+  {
+    id: "dance-3",
+    title: "Velocidad Central",
+    artist: "Club Atlas",
+    durationMs: 196000,
+  },
+  {
+    id: "dance-4",
+    title: "Mirror Floor",
+    artist: "Lumen District",
+    durationMs: 215000,
+  },
+];
+
+const latinaSpeakerTracks: SpeakerTrack[] = [
+  {
+    id: "latina-1",
+    title: "Mar de Medianoche",
+    artist: "Valen Cruz",
+    durationMs: 228000,
+  },
+  {
+    id: "latina-2",
+    title: "Barrio Solar",
+    artist: "Los del Puerto",
+    durationMs: 212000,
+  },
+  {
+    id: "latina-3",
+    title: "Marea Roja",
+    artist: "Cami del Mar",
+    durationMs: 235000,
+  },
+  {
+    id: "latina-4",
+    title: "Candela Clara",
+    artist: "Ritmo Fino",
+    durationMs: 207000,
+  },
+];
+
+const popSpeakerTracks: SpeakerTrack[] = [
+  {
+    id: "pop-1",
+    title: "Ciudad de Cristal",
+    artist: "Sofia Lago",
+    durationMs: 198000,
+  },
+  {
+    id: "pop-2",
+    title: "Cerca del Sol",
+    artist: "Tomas Vega",
+    durationMs: 184000,
+  },
+  {
+    id: "pop-3",
+    title: "Perfecta Senal",
+    artist: "Nina Costa",
+    durationMs: 216000,
+  },
+  {
+    id: "pop-4",
+    title: "Luces del Centro",
+    artist: "Daniel Roma",
+    durationMs: 205000,
+  },
+];
+
+const rockSpeakerTracks: SpeakerTrack[] = [
+  {
+    id: "rock-1",
+    title: "Motorpsico",
+    artist: "Patricio Rey y sus Redonditos de Ricota",
+    durationMs: 231000,
+  },
+  {
+    id: "rock-2",
+    title: "No Tan Distintos",
+    artist: "Sumo",
+    durationMs: 238000,
+  },
+  {
+    id: "rock-3",
+    title: "Roxanne",
+    artist: "The Police",
+    durationMs: 194000,
+  },
+  {
+    id: "rock-4",
+    title: "Stairway to Heaven",
+    artist: "Led Zeppelin",
+    durationMs: 482000,
+  },
+];
+
+const speakerCatalogByGenre: Record<SpeakerGenre, SpeakerTrack[]> = {
+  classica: classicalSpeakerTracks,
+  country: countrySpeakerTracks,
+  dance: danceSpeakerTracks,
+  latina: latinaSpeakerTracks,
+  pop: popSpeakerTracks,
+  rock: rockSpeakerTracks,
+};
+
+const speakerGenres = Object.keys(speakerGenreLabels) as SpeakerGenre[];
+
+const normalizeSpeakerGenre = (genre?: SpeakerGenre) =>
+  speakerGenres.includes((genre ?? defaultSpeakerGenre) as SpeakerGenre)
+    ? (genre ?? defaultSpeakerGenre)
+    : defaultSpeakerGenre;
+
+export function getSpeakerQueueForGenre(genre: SpeakerGenre): SpeakerTrack[] {
+  return speakerCatalogByGenre[normalizeSpeakerGenre(genre)].map((track) => ({ ...track }));
+}
+
+export function getSpeakerQueue(device: Device): SpeakerTrack[] {
+  if (device.speakerQueue && device.speakerQueue.length > 0) {
+    return device.speakerQueue;
+  }
+
+  return getSpeakerQueueForGenre(normalizeSpeakerGenre(device.speakerGenre));
+}
+
+export function getSpeakerCurrentTrack(device: Device): SpeakerTrack | null {
+  const queue = getSpeakerQueue(device);
+
+  if (queue.length === 0) return null;
+
+  const trackIndex = clamp(device.speakerTrackIndex ?? 0, 0, queue.length - 1);
+  return queue[trackIndex] ?? null;
+}
+
+export function getSpeakerProgress(device: Device, now = Date.now()) {
+  const currentTrack = getSpeakerCurrentTrack(device);
+  const cappedProgress = clamp(device.speakerProgressMs ?? 0, 0, currentTrack?.durationMs ?? 0);
+
+  if (
+    device.status !== "on" ||
+    device.speakerPlaybackState !== "playing" ||
+    typeof device.speakerTimestamp !== "number"
+  ) {
+    return cappedProgress;
+  }
+
+  return clamp(
+    cappedProgress + Math.max(0, now - device.speakerTimestamp),
+    0,
+    currentTrack?.durationMs ?? 0,
+  );
+}
+
+export function formatMediaDuration(durationMs = 0) {
+  const totalSeconds = Math.max(0, Math.floor(durationMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+export function getSpeakerVolumeLevel(device: Device) {
+  return clamp(Math.round((device.volume ?? 50) / 10), 0, 10);
+}
+
 function normalizeDeviceByKind(device: Device): Device {
   const base: Device = {
     ...device,
@@ -370,11 +638,29 @@ function normalizeDeviceByKind(device: Device): Device {
         status: position > 0 ? "on" : "off",
       };
     }
-    case "speaker":
+    case "speaker": {
+      const speakerGenre = normalizeSpeakerGenre(base.speakerGenre);
+      const speakerQueue =
+        base.speakerQueue && base.speakerQueue.length > 0
+          ? base.speakerQueue.map((track) => ({ ...track }))
+          : getSpeakerQueueForGenre(speakerGenre);
+      const speakerTrackIndex = clamp(base.speakerTrackIndex ?? 0, 0, Math.max(speakerQueue.length - 1, 0));
+      const currentTrack = speakerQueue[speakerTrackIndex] ?? speakerQueue[0];
+
       return {
         ...base,
         volume: clamp(base.volume ?? 50, 0, 100),
+        speakerGenre,
+        speakerQueue,
+        speakerTrackIndex,
+        speakerPlaybackState: base.status === "off" ? "stopped" : base.speakerPlaybackState ?? "stopped",
+        speakerProgressMs:
+          base.status === "off"
+            ? 0
+            : clamp(base.speakerProgressMs ?? 0, 0, currentTrack?.durationMs ?? 0),
+        speakerTimestamp: typeof base.speakerTimestamp === "number" ? base.speakerTimestamp : Date.now(),
       };
+    }
     case "door": {
       const fallbackMode = base.status === "on" ? "Cerrar" : "Abrir";
       const currentMode = base.doorMode ?? fallbackMode;
@@ -455,7 +741,17 @@ export function getDeviceSummary(device: Device) {
       return formatBlindPosition(device.position ?? 0);
     case "speaker":
       if (device.status === "off") return "Apagado";
-      return `Vol. ${device.volume ?? 50}%`;
+      if (device.speakerPlaybackState === "playing") {
+        const currentTrack = getSpeakerCurrentTrack(device);
+        return currentTrack
+          ? `${currentTrack.title} · ${formatMediaDuration(getSpeakerProgress(device))}`
+          : "Reproduciendo";
+      }
+      if (device.speakerPlaybackState === "paused") {
+        const currentTrack = getSpeakerCurrentTrack(device);
+        return currentTrack ? `Pausado · ${currentTrack.title}` : "Pausado";
+      }
+      return `${speakerGenreLabels[normalizeSpeakerGenre(device.speakerGenre)]} · Listo`;
     case "fridge":
       if (device.status === "off") return "Apagado";
       return `${device.fridgeTemp ?? 4}°C · Freezer ${device.freezerTemp ?? -18}°C`;
@@ -678,6 +974,7 @@ interface HomeContextValue {
   addHome: (name: string, subtitle: string, shortcuts: HomeShortcut[]) => Home;
   updateHome: (homeId: string, name: string, subtitle: string, shortcuts: HomeShortcut[]) => void;
   addSpace: (homeId: string, name: string, kind: SpaceKind) => void;
+  deleteSpace: (homeId: string, spaceId: string) => void;
   toggleDevice: (homeId: string, spaceId: string, deviceId: string) => void;
   updateBrightness: (homeId: string, spaceId: string, deviceId: string, value: number) => void;
   updateDeviceProperty: (
@@ -754,6 +1051,16 @@ function buildToggledDevice(device: Device) {
     });
   }
 
+  if (device.kind === "speaker") {
+    return normalizeDeviceByKind({
+      ...device,
+      status: nextStatus,
+      speakerPlaybackState: nextStatus === "off" ? "stopped" : device.speakerPlaybackState ?? "stopped",
+      speakerProgressMs: nextStatus === "off" ? 0 : device.speakerProgressMs ?? 0,
+      speakerTimestamp: Date.now(),
+    });
+  }
+
   return normalizeDeviceByKind({
     ...device,
     status: nextStatus,
@@ -786,6 +1093,27 @@ function buildUpdatedDevice(device: Device, updates: Partial<Device>) {
       ...merged,
       status: isClosed ? "on" : "off",
     };
+  }
+
+  if (device.kind === "speaker") {
+    if (updates.status === "off") {
+      return {
+        ...merged,
+        speakerPlaybackState: "stopped",
+        speakerProgressMs: 0,
+        speakerTimestamp: updates.speakerTimestamp ?? Date.now(),
+      };
+    }
+
+    if (
+      updates.speakerPlaybackState === "playing" ||
+      updates.speakerPlaybackState === "paused"
+    ) {
+      return {
+        ...merged,
+        status: "on",
+      };
+    }
   }
 
   return merged;
@@ -848,6 +1176,18 @@ export function HomeProvider({ children }: { children: ReactNode }) {
           previousHomes.map((home) =>
             home.id === homeId
               ? { ...home, spaces: [...home.spaces, newSpace] }
+              : home,
+          ),
+        );
+      },
+      deleteSpace: (homeId, spaceId) => {
+        setHomes((previousHomes) =>
+          previousHomes.map((home) =>
+            home.id === homeId
+              ? {
+                  ...home,
+                  spaces: home.spaces.filter((space) => space.id !== spaceId),
+                }
               : home,
           ),
         );

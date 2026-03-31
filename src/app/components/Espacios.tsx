@@ -30,6 +30,7 @@ import {
   type AcFanSpeed,
   type AcMode,
   getDeviceIcon,
+  getSpeakerQueueForGenre,
   type Device,
   type HomeShortcut,
   getSpaceIcon,
@@ -39,7 +40,7 @@ import {
   type SpaceKind,
   useHome,
 } from "../context/home-context";
-import { useIsMobile } from "../hooks/useIsMobile";
+import { COMPACT_LAYOUT_BREAKPOINT, useIsMobile } from "../hooks/useIsMobile";
 import { AlarmModal } from "./AlarmModal";
 import { DeviceDetailControls } from "./DeviceDetailControls";
 import {
@@ -70,6 +71,12 @@ export function Espacios() {
     acFanSpeed?: AcFanSpeed;
     swing?: boolean;
     doorMode: "Cerrar" | "Abrir" | "Bloquear" | "Desbloquear";
+    speakerGenre?: Device["speakerGenre"];
+    speakerQueue?: Device["speakerQueue"];
+    speakerTrackIndex?: number;
+    speakerPlaybackState?: Device["speakerPlaybackState"];
+    speakerProgressMs?: number;
+    speakerTimestamp?: number;
   };
 
   type AlarmOptionsState = {
@@ -83,7 +90,7 @@ export function Espacios() {
     mode: "house" | "regular";
   };
 
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(COMPACT_LAYOUT_BREAKPOINT);
   const navigate = useNavigate();
   const { accountOptions, selectedAccount, setSelectedAccount, sessionClosed, setSessionClosed } =
     useAccount();
@@ -264,7 +271,7 @@ export function Espacios() {
     if (kind === "speaker") {
       return {
         on: false,
-        volume: 45,
+        volume: 50,
         bass: 50,
         position: 0,
         slat: 0,
@@ -275,6 +282,12 @@ export function Espacios() {
         acFanSpeed: "med",
         swing: false,
         doorMode: "Abrir",
+        speakerGenre: "pop",
+        speakerQueue: getSpeakerQueueForGenre("pop"),
+        speakerTrackIndex: 0,
+        speakerPlaybackState: "stopped",
+        speakerProgressMs: 0,
+        speakerTimestamp: Date.now(),
       };
     }
 
@@ -700,7 +713,7 @@ export function Espacios() {
   return (
     <>
       <div className="relative">
-        <div className={isMobile ? "relative px-5 pb-28 pt-7" : "relative mx-auto max-w-7xl px-12 py-10"}>
+        <div className={isMobile ? "relative px-5 pb-10 pt-7" : "relative mx-auto max-w-7xl px-12 py-10"}>
           <div className={isMobile ? "space-y-6" : "space-y-8"}>
             <div className={isMobile ? "grid grid-cols-[minmax(0,1fr)_60px_60px] items-stretch gap-3" : "flex items-end justify-between gap-6"}>
               <DropdownMenu>
@@ -979,12 +992,12 @@ export function Espacios() {
                           >
                             {getShortcutIcon(shortcut.kind, 18, 1.8)}
                           </div>
-                          <div className="min-w-0">
+                          <div className="min-w-0 w-full">
                             <p className="truncate text-[14px] font-medium">
                               {shortcut.name}
                             </p>
                             <p
-                              className={`mt-1 text-[11px] uppercase tracking-[0.16em] ${
+                              className={`mt-1 break-words text-[11px] leading-[1.25] uppercase tracking-[0.12em] ${
                                 isActive ? "text-current/70" : "text-[#7f879c]"
                               }`}
                             >
@@ -1304,11 +1317,25 @@ export function Espacios() {
                         <div className="flex gap-3">
                           <button
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
+                              if (activeShortcut.kind === "speaker") {
+                                const nextOn = !control.on;
+
+                                updateShortcutControl(activeShortcut.id, {
+                                  on: nextOn,
+                                  speakerPlaybackState: nextOn
+                                    ? control.speakerPlaybackState ?? "stopped"
+                                    : "stopped",
+                                  speakerProgressMs: nextOn ? control.speakerProgressMs ?? 0 : 0,
+                                  speakerTimestamp: Date.now(),
+                                });
+                                return;
+                              }
+
                               updateShortcutControl(activeShortcut.id, {
                                 on: !control.on,
-                              })
-                            }
+                              });
+                            }}
                             className={`w-full rounded-[18px] border px-4 py-3 text-sm font-medium transition-colors ${
                               control.on
                                 ? "border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]"
@@ -1321,43 +1348,60 @@ export function Espacios() {
                       ) : null}
 
                       {activeShortcut.kind === "speaker" ? (
-                        <>
-                          <div className="space-y-2">
-                            <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                              Volumen: {control.volume}%
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={100}
-                              value={control.volume}
-                              onChange={(event) =>
-                                updateShortcutControl(activeShortcut.id, {
-                                  volume: Number(event.target.value),
-                                })
-                              }
-                              className="w-full accent-[#f4bd49]"
-                            />
-                          </div>
+                        <DeviceDetailControls
+                          device={{
+                            id: activeShortcut.id,
+                            name: activeShortcut.name,
+                            kind: "speaker",
+                            status: control.on ? "on" : "off",
+                            volume: control.volume,
+                            speakerGenre: control.speakerGenre,
+                            speakerQueue: control.speakerQueue,
+                            speakerTrackIndex: control.speakerTrackIndex,
+                            speakerPlaybackState: control.speakerPlaybackState,
+                            speakerProgressMs: control.speakerProgressMs,
+                            speakerTimestamp: control.speakerTimestamp,
+                          } satisfies Device}
+                          onUpdate={(updates) => {
+                            const patch: Partial<ShortcutControlState> = {};
 
-                          <div className="space-y-2">
-                            <label className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
-                              Bajos: {control.bass}%
-                            </label>
-                            <input
-                              type="range"
-                              min={0}
-                              max={100}
-                              value={control.bass}
-                              onChange={(event) =>
-                                updateShortcutControl(activeShortcut.id, {
-                                  bass: Number(event.target.value),
-                                })
-                              }
-                              className="w-full accent-[#f4bd49]"
-                            />
-                          </div>
-                        </>
+                            if (typeof updates.status === "string") {
+                              patch.on = updates.status === "on";
+                            }
+
+                            if (typeof updates.volume === "number") {
+                              patch.volume = updates.volume;
+                            }
+
+                            if (typeof updates.speakerGenre === "string") {
+                              patch.speakerGenre = updates.speakerGenre;
+                            }
+
+                            if (Array.isArray(updates.speakerQueue)) {
+                              patch.speakerQueue = updates.speakerQueue;
+                            }
+
+                            if (typeof updates.speakerTrackIndex === "number") {
+                              patch.speakerTrackIndex = updates.speakerTrackIndex;
+                            }
+
+                            if (typeof updates.speakerPlaybackState === "string") {
+                              patch.speakerPlaybackState = updates.speakerPlaybackState;
+                            }
+
+                            if (typeof updates.speakerProgressMs === "number") {
+                              patch.speakerProgressMs = updates.speakerProgressMs;
+                            }
+
+                            if (typeof updates.speakerTimestamp === "number") {
+                              patch.speakerTimestamp = updates.speakerTimestamp;
+                            }
+
+                            if (Object.keys(patch).length > 0) {
+                              updateShortcutControl(activeShortcut.id, patch);
+                            }
+                          }}
+                        />
                       ) : null}
 
                       {activeShortcut.kind === "blind" ? (

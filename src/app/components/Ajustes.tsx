@@ -1,5 +1,5 @@
 import { Wifi, Shield, Bell, Info } from "lucide-react";
-import { useIsMobile } from "../hooks/useIsMobile";
+import { COMPACT_LAYOUT_BREAKPOINT, useIsMobile } from "../hooks/useIsMobile";
 
 interface SettingItem {
   id: string;
@@ -24,7 +24,7 @@ const settings: SettingItem[] = [
 ];
 
 export function Ajustes() {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(COMPACT_LAYOUT_BREAKPOINT);
 
   if (isMobile) {
     return (

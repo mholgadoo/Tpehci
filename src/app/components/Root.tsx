@@ -8,7 +8,7 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { useIsMobile } from "../hooks/useIsMobile";
+import { COMPACT_LAYOUT_BREAKPOINT, useIsMobile } from "../hooks/useIsMobile";
 import { getAccountInitials, useAccount } from "../context/account-context";
 import {
   DropdownMenu,
@@ -31,7 +31,7 @@ const secondaryNavItem = {
 
 export function Root() {
   const location = useLocation();
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(COMPACT_LAYOUT_BREAKPOINT);
   const SecondaryIcon = secondaryNavItem.icon;
   const { accountOptions, selectedAccount, setSelectedAccount, setSessionClosed } =
     useAccount();
@@ -46,12 +46,12 @@ export function Root() {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-[#000000] text-white">
-        <div className="pb-24">
+        <div className="mx-auto w-full max-w-[920px] pb-24">
           <Outlet />
         </div>
 
         <nav className="fixed bottom-0 left-0 right-0 border-t border-[#1f2432] bg-[#080a10]/96 backdrop-blur-xl">
-          <div className="mx-auto flex h-[72px] max-w-xl items-center justify-center gap-3 px-5">
+          <div className="mx-auto flex h-[72px] w-full max-w-[920px] items-center justify-center gap-3 px-5">
             {primaryNavItems.map(({ path, label, icon: Icon }) => {
               const active = isActive(path);
 

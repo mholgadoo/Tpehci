@@ -1,8 +1,16 @@
 import {
+  Clock3,
+  Disc3,
   Flame,
+  ListMusic,
   Minus,
   Palette,
+  Pause,
+  Play,
+  SkipBack,
+  SkipForward,
   Snowflake,
+  Square,
   Volume,
   Volume1,
   Volume2,
@@ -15,12 +23,21 @@ import {
   acModeLabels,
   fanSpeedLabels,
   formatBlindPosition,
+  formatMediaDuration,
   formatTimerMinutes,
+  getSpeakerCurrentTrack,
+  getSpeakerProgress,
+  getSpeakerQueue,
+  getSpeakerQueueForGenre,
+  getSpeakerVolumeLevel,
   ovenModeLabels,
+  speakerGenreLabels,
+  speakerPlaybackStateLabels,
   type AcFanSpeed,
   type AcMode,
   type Device,
   type OvenMode,
+  type SpeakerGenre,
 } from "../context/home-context";
 import { useEffect, useMemo, useState } from "react";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -660,28 +677,388 @@ function BlindControls({ device, onUpdate }: DeviceDetailControlsProps) {
   );
 }
 
+function MediaActionButton({
+  icon,
+  label,
+  onClick,
+  disabled = false,
+  emphasized = false,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  emphasized?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex min-h-[64px] flex-col items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-xs font-medium transition-colors disabled:opacity-45 ${
+        emphasized
+          ? "border-[#f0c45c]/60 bg-[#171208] text-[#f0c45c]"
+          : "border-[#2d3749] bg-[#121a27] text-[#dce3f0]"
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
 function SpeakerControls({ device, onUpdate }: DeviceDetailControlsProps) {
-  const volume = device.volume ?? 50;
-  const VolumeIcon = volume === 0 ? Volume : volume < 45 ? Volume1 : Volume2;
+  const [liveNow, setLiveNow] = useState(() => Date.now());
+  const queue = getSpeakerQueue(device);
+  const currentTrack = getSpeakerCurrentTrack(device);
+  const volumeLevel = getSpeakerVolumeLevel(device);
+  const volumePercent = device.volume ?? 50;
+  const playbackState =
+    device.status === "off" ? "stopped" : device.speakerPlaybackState ?? "stopped";
+  const currentGenre = device.speakerGenre ?? "pop";
+  const currentTrackIndex = Math.min(device.speakerTrackIndex ?? 0, Math.max(queue.length - 1, 0));
+  const progressMs = getSpeakerProgress(device, liveNow);
+  const durationMs = currentTrack?.durationMs ?? 0;
+  const progressRatio = durationMs > 0 ? Math.min(100, (progressMs / durationMs) * 100) : 0;
+  const canGoPrevious = progressMs > 0 || currentTrackIndex > 0;
+  const canGoNext = currentTrackIndex < queue.length - 1;
+  const VolumeIcon = volumePercent === 0 ? Volume : volumePercent < 45 ? Volume1 : Volume2;
+
+  useEffect(() => {
+    setLiveNow(Date.now());
+  }, [
+    device.status,
+    device.speakerPlaybackState,
+    device.speakerTrackIndex,
+    device.speakerProgressMs,
+    device.speakerTimestamp,
+    device.speakerGenre,
+  ]);
+
+  useEffect(() => {
+    if (playbackState !== "playing") return;
+
+    const intervalId = window.setInterval(() => {
+      setLiveNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [playbackState]);
+
+  useEffect(() => {
+    if (playbackState !== "playing" || !currentTrack || progressMs < durationMs || durationMs === 0) {
+      return;
+    }
+
+    const timestamp = Date.now();
+
+    if (currentTrackIndex < queue.length - 1) {
+      onUpdate({
+        status: "on",
+        speakerTrackIndex: currentTrackIndex + 1,
+        speakerProgressMs: 0,
+        speakerTimestamp: timestamp,
+        speakerPlaybackState: "playing",
+      });
+      return;
+    }
+
+    onUpdate({
+      status: "on",
+      speakerPlaybackState: "stopped",
+      speakerProgressMs: 0,
+      speakerTimestamp: timestamp,
+    });
+  }, [currentTrack, currentTrackIndex, durationMs, onUpdate, playbackState, progressMs, queue.length]);
+
+  const updateSpeaker = (updates: Partial<Device>) => {
+    onUpdate(updates);
+  };
+
+  const setVolumeLevel = (nextLevel: number) => {
+    updateSpeaker({ volume: Math.max(0, Math.min(10, nextLevel)) * 10 });
+  };
+
+  const handlePlay = () => {
+    updateSpeaker({
+      status: "on",
+      speakerPlaybackState: "playing",
+      speakerProgressMs: playbackState === "stopped" ? 0 : progressMs,
+      speakerTimestamp: Date.now(),
+    });
+  };
+
+  const handlePause = () => {
+    updateSpeaker({
+      status: "on",
+      speakerPlaybackState: "paused",
+      speakerProgressMs: progressMs,
+      speakerTimestamp: Date.now(),
+    });
+  };
+
+  const handleStop = () => {
+    updateSpeaker({
+      status: "on",
+      speakerPlaybackState: "stopped",
+      speakerProgressMs: 0,
+      speakerTimestamp: Date.now(),
+    });
+  };
+
+  const handleNext = () => {
+    if (!canGoNext) return;
+
+    updateSpeaker({
+      status: "on",
+      speakerTrackIndex: currentTrackIndex + 1,
+      speakerProgressMs: 0,
+      speakerTimestamp: Date.now(),
+      speakerPlaybackState: playbackState === "stopped" ? "stopped" : playbackState,
+    });
+  };
+
+  const handlePrevious = () => {
+    if (progressMs > 3000 || currentTrackIndex === 0) {
+      updateSpeaker({
+        status: "on",
+        speakerProgressMs: 0,
+        speakerTimestamp: Date.now(),
+      });
+      return;
+    }
+
+    updateSpeaker({
+      status: "on",
+      speakerTrackIndex: currentTrackIndex - 1,
+      speakerProgressMs: 0,
+      speakerTimestamp: Date.now(),
+      speakerPlaybackState: playbackState === "stopped" ? "stopped" : playbackState,
+    });
+  };
+
+  const handleGenreChange = (genre: SpeakerGenre) => {
+    updateSpeaker({
+      speakerGenre: genre,
+      speakerQueue: getSpeakerQueueForGenre(genre),
+      speakerTrackIndex: 0,
+      speakerProgressMs: 0,
+      speakerTimestamp: Date.now(),
+      speakerPlaybackState: device.status === "on" ? playbackState : "stopped",
+    });
+  };
 
   return (
-    <Section title="Volumen" description="Ajuste general del parlante.">
-      <div className="grid gap-4 sm:grid-cols-[auto,1fr] sm:items-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-[18px] border border-[#2d3749] bg-[#121a27] text-[#f0c45c]">
-          <VolumeIcon size={28} />
+    <div className="space-y-4">
+      <Section title="Ahora suena" description="Formato inspirado en el playback state y la queue de Spotify.">
+        <div className="rounded-[22px] border border-[#2d3749] bg-[#121a27] p-4">
+          <div className="flex gap-4">
+            <div
+              className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[22px] border border-white/10 text-white shadow-[0_12px_24px_rgba(0,0,0,0.25)]"
+              style={{
+                background:
+                  currentGenre === "rock"
+                    ? "linear-gradient(135deg, #43151b 0%, #9b2c39 100%)"
+                    : currentGenre === "dance"
+                      ? "linear-gradient(135deg, #102b50 0%, #2263d1 100%)"
+                      : currentGenre === "latina"
+                        ? "linear-gradient(135deg, #4f1e09 0%, #dd7a1e 100%)"
+                        : currentGenre === "country"
+                          ? "linear-gradient(135deg, #3b2a18 0%, #9f6c33 100%)"
+                          : currentGenre === "classica"
+                            ? "linear-gradient(135deg, #2a1f40 0%, #6e54a3 100%)"
+                            : "linear-gradient(135deg, #11402d 0%, #1db954 100%)",
+              }}
+            >
+              <Disc3 size={32} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7f879c]">
+                {speakerGenreLabels[currentGenre]}
+              </p>
+              <h4 className="mt-2 truncate text-[20px] font-semibold text-white">
+                {currentTrack?.title ?? "Sin canciones cargadas"}
+              </h4>
+              <p className="mt-1 truncate text-sm text-[#98a2b7]">
+                {currentTrack?.artist ?? "Elegí un género para generar la lista"}
+              </p>
+              <p className="mt-3 text-sm font-medium text-[#f0c45c]">
+                {device.status === "off" ? "Apagado" : speakerPlaybackStateLabels[playbackState]}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5">
+            <div className="h-2 overflow-hidden rounded-full bg-[#263144]">
+              <div
+                className="h-full rounded-full bg-[#1db954] transition-[width] duration-300"
+                style={{ width: `${progressRatio}%` }}
+              />
+            </div>
+            <div className="mt-2 flex items-center justify-between text-xs text-[#7f879c]">
+              <span>{formatMediaDuration(progressMs)}</span>
+              <span>{formatMediaDuration(durationMs)}</span>
+            </div>
+          </div>
+
+          <div className="mt-5 grid grid-cols-5 gap-2">
+            <MediaActionButton
+              icon={<SkipBack size={18} />}
+              label="Anterior"
+              onClick={handlePrevious}
+              disabled={!canGoPrevious}
+            />
+            <MediaActionButton
+              icon={<Play size={18} />}
+              label={playbackState === "paused" ? "Reanudar" : "Reproducir"}
+              onClick={handlePlay}
+              emphasized
+            />
+            <MediaActionButton
+              icon={<Pause size={18} />}
+              label="Pausar"
+              onClick={handlePause}
+              disabled={playbackState !== "playing"}
+            />
+            <MediaActionButton
+              icon={<Square size={16} />}
+              label="Detener"
+              onClick={handleStop}
+              disabled={playbackState === "stopped"}
+            />
+            <MediaActionButton
+              icon={<SkipForward size={18} />}
+              label="Siguiente"
+              onClick={handleNext}
+              disabled={!canGoNext}
+            />
+          </div>
         </div>
-        <DisplayValue value={volume} suffix="%" />
-      </div>
-      <div className="mt-4">
-        <Range
-          value={volume}
-          min={0}
-          max={100}
-          onChange={(value) => onUpdate({ volume: value })}
-          labels={["Mute", "Alto"]}
+      </Section>
+
+      <Section title="Volumen" description="Nivel de 0 a 10, con equivalencia al porcentaje del dispositivo.">
+        <div className="grid gap-4 sm:grid-cols-[auto,1fr] sm:items-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-[18px] border border-[#2d3749] bg-[#121a27] text-[#f0c45c]">
+            <VolumeIcon size={28} />
+          </div>
+          <DisplayValue value={volumeLevel} suffix="/10" />
+        </div>
+        <div className="mt-4 flex items-center justify-between rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-3">
+          <Stepper
+            onDecrease={() => setVolumeLevel(volumeLevel - 1)}
+            onIncrease={() => setVolumeLevel(volumeLevel + 1)}
+            decreaseDisabled={volumeLevel <= 0}
+            increaseDisabled={volumeLevel >= 10}
+          />
+          <p className="text-sm text-[#98a2b7]">Equivale a {volumePercent}%</p>
+        </div>
+        <div className="mt-4">
+          <Range
+            value={volumeLevel}
+            min={0}
+            max={10}
+            step={1}
+            onChange={setVolumeLevel}
+            labels={["0", "10"]}
+            accentColor="#1db954"
+          />
+        </div>
+      </Section>
+
+      <Section title="Género" description="Spotify usa géneros como seed para recomendaciones; acá recompone la cola con esa misma lógica.">
+        <SegmentedButtons
+          options={(Object.entries(speakerGenreLabels) as Array<[SpeakerGenre, string]>).map(
+            ([value, label]) => ({
+              value,
+              label,
+            }),
+          )}
+          value={currentGenre}
+          onChange={handleGenreChange}
+          columns={3}
         />
-      </div>
-    </Section>
+      </Section>
+
+      <Section title="Lista de reproducción" description="Canciones y duración para el género activo.">
+        <div className="space-y-2">
+          {queue.map((track, index) => {
+            const isCurrentTrack = index === currentTrackIndex;
+
+            return (
+              <div
+                key={track.id}
+                className={`flex items-center justify-between rounded-[18px] border px-4 py-3 transition-colors ${
+                  isCurrentTrack
+                    ? "border-[#1db954]/50 bg-[#101f17]"
+                    : "border-[#2d3749] bg-[#121a27]"
+                }`}
+              >
+                <div className="min-w-0 pr-4">
+                  <p className="truncate text-sm font-medium text-white">
+                    {index + 1}. {track.title}
+                  </p>
+                  <p className="truncate text-sm text-[#98a2b7]">{track.artist}</p>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-[#98a2b7]">
+                  {isCurrentTrack ? <Play size={14} className="text-[#1db954]" /> : null}
+                  <span>{formatMediaDuration(track.durationMs)}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </Section>
+
+      <Section title="Estado del parlante" description="Snapshot del reproductor con volumen, género, canción actual y marca de tiempo.">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4">
+            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
+              <Play size={16} />
+              Estado
+            </p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              {device.status === "off" ? "Apagado" : speakerPlaybackStateLabels[playbackState]}
+            </p>
+          </div>
+          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4">
+            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
+              <Volume2 size={16} />
+              Volumen
+            </p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              Nivel {volumeLevel} · {volumePercent}%
+            </p>
+          </div>
+          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4">
+            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
+              <Disc3 size={16} />
+              Género
+            </p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              {speakerGenreLabels[currentGenre]}
+            </p>
+          </div>
+          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4">
+            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
+              <Clock3 size={16} />
+              Marca de tiempo
+            </p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              {formatMediaDuration(progressMs)}
+            </p>
+          </div>
+          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4 sm:col-span-2">
+            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
+              <ListMusic size={16} />
+              Canción actual
+            </p>
+            <p className="mt-2 text-lg font-semibold text-white">
+              {currentTrack ? `${currentTrack.title} · ${currentTrack.artist}` : "Sin reproducción"}
+            </p>
+          </div>
+        </div>
+      </Section>
+    </div>
   );
 }
 

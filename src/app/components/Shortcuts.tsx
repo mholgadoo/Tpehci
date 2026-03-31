@@ -1,10 +1,10 @@
 import { Blinds, Bot, CookingPot, DoorOpen, Droplet, Plus, Speaker, Trash2, Wind, Zap } from "lucide-react";
 import { useState } from "react";
-import { useIsMobile } from "../hooks/useIsMobile";
+import { COMPACT_LAYOUT_BREAKPOINT, useIsMobile } from "../hooks/useIsMobile";
 import { type HomeShortcutKind, useHome } from "../context/home-context";
 
 export function Shortcuts() {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(COMPACT_LAYOUT_BREAKPOINT);
   const { currentHome, updateHome } = useHome();
   const [isComposerOpen, setIsComposerOpen] = useState(false);
   const [newShortcutKind, setNewShortcutKind] = useState<HomeShortcutKind | null>(null);

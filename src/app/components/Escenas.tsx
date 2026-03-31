@@ -21,7 +21,7 @@ import {
   type Device,
   type DeviceKind,
 } from "../context/home-context";
-import { useIsMobile } from "../hooks/useIsMobile";
+import { COMPACT_LAYOUT_BREAKPOINT, useIsMobile } from "../hooks/useIsMobile";
 import { CreateSceneDialog } from "./CreateSceneDialog";
 import {
   Dialog,
@@ -325,7 +325,7 @@ const createUniqueSceneId = (
 };
 
 export function Escenas() {
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile(COMPACT_LAYOUT_BREAKPOINT);
   const [scenes, setScenes] = useState<Scene[]>(defaultScenes);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedSceneId, setSelectedSceneId] = useState<string | null>(null);
