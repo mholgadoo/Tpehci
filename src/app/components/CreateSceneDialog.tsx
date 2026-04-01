@@ -477,13 +477,7 @@ export function CreateSceneDialog({
               Datos básicos
             </h3>
           </div>
-          <div className="inline-flex w-fit items-center rounded-full border border-[#2b3548] bg-[#10151f] px-3 py-2 text-sm text-[#d0d6e3]">
-            El nombre es obligatorio
-          </div>
         </div>
-        <p className="text-[15px] leading-6 text-[#a5aec2]">
-          Arrancá con lo mínimo y seguí. Sin paneles angostos ni ruido extra.
-        </p>
       </div>
 
       <div className="space-y-5">
@@ -512,7 +506,7 @@ export function CreateSceneDialog({
           />
           {showNameError ? (
             <p className="mt-2 text-sm text-[#f29a9a]">
-              Falta el nombre de la escena.
+              El nombre es obligatorio
             </p>
           ) : null}
         </div>
@@ -583,13 +577,7 @@ export function CreateSceneDialog({
               Elegí el estilo
             </h3>
           </div>
-          <div className="inline-flex items-center rounded-full border border-[#2b3548] bg-[#10151f] px-3 py-2 text-sm text-[#d0d6e3]">
-            Seleccionado: {selectedSceneType.label}
-          </div>
         </div>
-        <p className="text-[15px] leading-6 text-[#a5aec2]">
-          Todas las opciones visibles, sin panel lateral achicando el contenido.
-        </p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
@@ -643,10 +631,7 @@ export function CreateSceneDialog({
           <h3 className="mt-2 text-[26px] font-semibold text-white">
             Configurá dispositivos
           </h3>
-          <p className="mt-2 max-w-[48ch] text-[15px] leading-6 text-[#a5aec2]">
-            Entrá ambiente por ambiente. Solo se muestran los controles del
-            espacio activo para evitar un modal eterno.
-          </p>
+        
         </div>
         <div className="inline-flex items-center rounded-full border border-[#2b3548] bg-[#10151f] px-4 py-2 text-sm text-[#d0d6e3]">
           {activeDevices.length} dispositivo
@@ -795,9 +780,6 @@ export function CreateSceneDialog({
         <h3 className="mt-2 text-[28px] font-semibold text-white">
           Revisá antes de guardar
         </h3>
-        <p className="mt-2 text-[15px] leading-6 text-[#a5aec2]">
-          Todo el resumen en ancho completo, sin panel lateral comiéndose el espacio.
-        </p>
       </div>
 
       <div className="space-y-4">
@@ -877,8 +859,7 @@ export function CreateSceneDialog({
             </div>
           ) : (
             <p className="mt-4 text-sm leading-6 text-[#98a2b7]">
-              No activaste dispositivos. Podés guardar igual si querés dejar la
-              escena lista para completar después.
+              No activaste dispositivos
             </p>
           )}
         </div>

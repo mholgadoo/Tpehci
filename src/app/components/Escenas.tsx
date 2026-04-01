@@ -566,7 +566,7 @@ export function Escenas() {
                   Nueva escena
                 </h3>
                 <p className="text-[#aeb6c8]">
-                  Creá una rutina paso a paso y activala cuando la necesites.
+                  Creá una rutina 
                 </p>
               </div>
             </div>
@@ -777,9 +777,7 @@ export function Escenas() {
               <div className="border-t border-[#20283a] bg-[#0b0f16] px-5 py-4 sm:px-8">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm text-[#8b96ab]">
-                    {selectedScene.isActive
-                      ? "La escena está activa ahora."
-                      : "Podés activarla desde acá o desde la lista."}
+                 
                   </p>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <Button

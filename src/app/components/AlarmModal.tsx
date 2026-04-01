@@ -208,42 +208,6 @@ export function AlarmModal({
 
             <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-6">
               <div className="space-y-5">
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-[22px] border border-[#252e3f] bg-[#121722] p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
-                      Modo
-                    </p>
-                    <div className="mt-3">
-                      <span className={`inline-flex rounded-full border px-3 py-1.5 text-sm font-medium ${currentModeMeta.classes.badge}`}>
-                        {currentModeMeta.label}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-[#98a2b7]">
-                      {currentModeMeta.helper}
-                    </p>
-                  </div>
-
-                  <div className="rounded-[22px] border border-[#252e3f] bg-[#121722] p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
-                      Zonas activas
-                    </p>
-                    <p className="mt-3 text-[28px] font-semibold text-white">{armedZoneCount}</p>
-                    <p className="mt-2 text-sm leading-6 text-[#98a2b7]">
-                      de {alarm.zones.length} zonas listas para disparar alertas.
-                    </p>
-                  </div>
-
-                  <div className="rounded-[22px] border border-[#252e3f] bg-[#121722] p-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
-                      Verificación
-                    </p>
-                    <p className="mt-3 text-[20px] font-semibold text-white">PIN 4 dígitos</p>
-                    <p className="mt-2 text-sm leading-6 text-[#98a2b7]">
-                      Cada cambio de modo o zona solicita confirmación.
-                    </p>
-                  </div>
-                </div>
-
                 <section className="rounded-[26px] border border-[#252e3f] bg-[#121722] p-5">
                   <div className="mb-4">
                     <h3 className="text-[22px] font-semibold text-white">Modo de alarma</h3>
