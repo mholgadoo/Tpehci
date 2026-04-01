@@ -1,8 +1,6 @@
 import {
-  Clock3,
   Disc3,
   Flame,
-  ListMusic,
   Minus,
   Palette,
   Pause,
@@ -10,7 +8,6 @@ import {
   SkipBack,
   SkipForward,
   Snowflake,
-  Square,
   Volume,
   Volume1,
   Volume2,
@@ -695,14 +692,15 @@ function MediaActionButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className={`flex min-h-[64px] flex-col items-center justify-center gap-2 rounded-[18px] border px-3 py-3 text-xs font-medium transition-colors disabled:opacity-45 ${
+      aria-label={label}
+      title={label}
+      className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[18px] border transition-colors disabled:opacity-45 ${
         emphasized
           ? "border-[#f0c45c]/60 bg-[#171208] text-[#f0c45c]"
           : "border-[#2d3749] bg-[#121a27] text-[#dce3f0]"
       }`}
     >
       {icon}
-      <span>{label}</span>
     </button>
   );
 }
@@ -722,6 +720,7 @@ function SpeakerControls({ device, onUpdate }: DeviceDetailControlsProps) {
   const progressRatio = durationMs > 0 ? Math.min(100, (progressMs / durationMs) * 100) : 0;
   const canGoPrevious = progressMs > 0 || currentTrackIndex > 0;
   const canGoNext = currentTrackIndex < queue.length - 1;
+  const isPlaying = playbackState === "playing";
   const VolumeIcon = volumePercent === 0 ? Volume : volumePercent < 45 ? Volume1 : Volume2;
 
   useEffect(() => {
@@ -797,13 +796,13 @@ function SpeakerControls({ device, onUpdate }: DeviceDetailControlsProps) {
     });
   };
 
-  const handleStop = () => {
-    updateSpeaker({
-      status: "on",
-      speakerPlaybackState: "stopped",
-      speakerProgressMs: 0,
-      speakerTimestamp: Date.now(),
-    });
+  const handleTogglePlayback = () => {
+    if (isPlaying) {
+      handlePause();
+      return;
+    }
+
+    handlePlay();
   };
 
   const handleNext = () => {
@@ -901,7 +900,7 @@ function SpeakerControls({ device, onUpdate }: DeviceDetailControlsProps) {
             </div>
           </div>
 
-          <div className="mt-5 grid grid-cols-5 gap-2">
+          <div className="mt-5 flex items-center justify-center gap-3">
             <MediaActionButton
               icon={<SkipBack size={18} />}
               label="Anterior"
@@ -909,22 +908,11 @@ function SpeakerControls({ device, onUpdate }: DeviceDetailControlsProps) {
               disabled={!canGoPrevious}
             />
             <MediaActionButton
-              icon={<Play size={18} />}
-              label={playbackState === "paused" ? "Reanudar" : "Reproducir"}
-              onClick={handlePlay}
+              icon={isPlaying ? <Pause size={18} /> : <Play size={18} />}
+              label={isPlaying ? "Pausar" : "Reproducir"}
+              onClick={handleTogglePlayback}
+              disabled={!currentTrack}
               emphasized
-            />
-            <MediaActionButton
-              icon={<Pause size={18} />}
-              label="Pausar"
-              onClick={handlePause}
-              disabled={playbackState !== "playing"}
-            />
-            <MediaActionButton
-              icon={<Square size={16} />}
-              label="Detener"
-              onClick={handleStop}
-              disabled={playbackState === "stopped"}
             />
             <MediaActionButton
               icon={<SkipForward size={18} />}
@@ -1009,55 +997,6 @@ function SpeakerControls({ device, onUpdate }: DeviceDetailControlsProps) {
         </div>
       </Section>
 
-      <Section title="Estado del parlante" description="Snapshot del reproductor con volumen, género, canción actual y marca de tiempo.">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4">
-            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
-              <Play size={16} />
-              Estado
-            </p>
-            <p className="mt-2 text-lg font-semibold text-white">
-              {device.status === "off" ? "Apagado" : speakerPlaybackStateLabels[playbackState]}
-            </p>
-          </div>
-          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4">
-            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
-              <Volume2 size={16} />
-              Volumen
-            </p>
-            <p className="mt-2 text-lg font-semibold text-white">
-              Nivel {volumeLevel} · {volumePercent}%
-            </p>
-          </div>
-          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4">
-            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
-              <Disc3 size={16} />
-              Género
-            </p>
-            <p className="mt-2 text-lg font-semibold text-white">
-              {speakerGenreLabels[currentGenre]}
-            </p>
-          </div>
-          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4">
-            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
-              <Clock3 size={16} />
-              Marca de tiempo
-            </p>
-            <p className="mt-2 text-lg font-semibold text-white">
-              {formatMediaDuration(progressMs)}
-            </p>
-          </div>
-          <div className="rounded-[18px] border border-[#2d3749] bg-[#121a27] px-4 py-4 sm:col-span-2">
-            <p className="flex items-center gap-2 text-sm text-[#98a2b7]">
-              <ListMusic size={16} />
-              Canción actual
-            </p>
-            <p className="mt-2 text-lg font-semibold text-white">
-              {currentTrack ? `${currentTrack.title} · ${currentTrack.artist}` : "Sin reproducción"}
-            </p>
-          </div>
-        </div>
-      </Section>
     </div>
   );
 }
