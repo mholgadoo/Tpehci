@@ -2,7 +2,6 @@ import { Link, Outlet, useLocation } from "react-router";
 import {
   Home,
   LogOut,
-  MoreHorizontal,
   Settings,
   Sparkles,
   User,
@@ -71,46 +70,17 @@ export function Root() {
               );
             })}
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className={`flex min-w-[64px] items-center justify-center rounded-[20px] border px-4 py-3 transition-all ${
-                    isActive(secondaryNavItem.path)
-                      ? "border-[#f4c95d] bg-[#131822] text-[#f4c95d]"
-                      : "border-[#262d3d] bg-[#10141d] text-[#aab3c8]"
-                  }`}
-                >
-                  <MoreHorizontal size={20} />
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent
-                align="end"
-                side="top"
-                sideOffset={14}
-                className="w-[220px] rounded-[22px] border border-[#2b3042] bg-[#101520]/96 p-2 text-white shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl"
-              >
-                <DropdownMenuItem
-                  asChild
-                  className="rounded-[16px] px-3 py-3 text-[#d5dbea] focus:bg-[#1b2232] focus:text-white"
-                >
-                  <Link to={secondaryNavItem.path} className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-[14px] bg-[#171d2a] text-[#f4c95d]">
-                      <Settings size={18} />
-                    </div>
-                    <div>
-                      <p className="text-[15px] font-medium text-white">
-                        {secondaryNavItem.label}
-                      </p>
-                      <p className="text-xs text-[#8f97ab]">
-                        Preferencias y ajustes
-                      </p>
-                    </div>
-                  </Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link
+              to={secondaryNavItem.path}
+              aria-label={secondaryNavItem.label}
+              className={`flex min-w-[64px] items-center justify-center rounded-[20px] border px-4 py-3 transition-all ${
+                isActive(secondaryNavItem.path)
+                  ? "border-[#f4c95d] bg-[#131822] text-[#f4c95d]"
+                  : "border-[#262d3d] bg-[#10141d] text-[#aab3c8]"
+              }`}
+            >
+              <Settings size={20} />
+            </Link>
           </div>
         </nav>
       </div>

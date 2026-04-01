@@ -600,9 +600,7 @@ export function Espacios() {
             Sesión cerrada
           </p>
           <h1 className="mt-3 text-[30px] font-semibold text-white">Hasta luego</h1>
-          <p className="mt-2 text-sm text-[#8f97ab]">
-            Cerraste sesión en la maqueta. Podés volver a entrar para la presentación.
-          </p>
+         
           <button
             type="button"
             onClick={() => setSessionClosed(false)}
@@ -696,9 +694,7 @@ export function Espacios() {
         <p className="text-[24px] font-semibold text-white">
           Todavía no hay espacios en {currentHome.name}
         </p>
-        <p className="mt-3 text-[15px] leading-7 text-[#8f97ab]">
-          Cargá el primer ambiente para que el hogar quede listo para la demo.
-        </p>
+        
         <button
           type="button"
           onClick={openSpaceModal}
@@ -951,12 +947,10 @@ export function Espacios() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7f879c]">
+                    <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#7f879c]">
                       Shortcuts
                     </p>
-                    <p className="mt-1 text-sm text-[#98a2b7]">
-                      Controles rápidos sin tapar la grilla principal
-                    </p>
+                    
                   </div>
                   <Link
                     to="/shortcuts"

@@ -133,7 +133,7 @@ export function Shortcuts() {
                   Nuevo shortcut
                 </h3>
                 <p className="text-[#aeb6c8]">
-                  Agregá un acceso directo a un dispositivo de tu hogar.
+                  Agregá un acceso directo 
                 </p>
               </div>
             </div>

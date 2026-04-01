@@ -544,35 +544,46 @@ export function Escenas() {
         <div className={isMobile ? "mb-8" : "mb-10"}>
           <h1 className={isMobile ? "mb-2 text-3xl" : "mb-3 text-4xl"}>Escenas</h1>
           <p className="text-gray-400">
-            Automatizá tu hogar con un toque y revisá cada rutina en detalle.
+            El ambiente perfecto para cada momento, a un solo toque.
           </p>
         </div>
 
         <div className={isMobile ? "space-y-4" : "space-y-5"}>
           {scenes.map((scene) => renderSceneCard(scene))}
 
-          <div
-            onClick={handleOpenCreateScene}
-            className={`cursor-pointer rounded-[30px] border border-dashed border-[#3b465d] bg-gradient-to-br from-[#121722] to-[#0b0f17] transition-all ${
-              isMobile ? "p-5" : "p-6 hover:-translate-y-1 hover:border-[#566582]"
-            }`}
-          >
-            <div className="flex items-center gap-5">
-              <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-[#f4c95d]/60 bg-[#16120a] text-[#f4c95d]">
-                <Plus size={28} />
-              </div>
-              <div>
-                <h3 className={isMobile ? "mb-1 text-[20px] font-semibold text-white" : "mb-2 text-[22px] font-semibold text-white"}>
-                  Nueva escena
-                </h3>
-                <p className="text-[#aeb6c8]">
-                  Creá una rutina 
-                </p>
+          {isMobile ? null : (
+            <div
+              onClick={handleOpenCreateScene}
+              className="cursor-pointer rounded-[30px] border border-dashed border-[#3b465d] bg-gradient-to-br from-[#121722] to-[#0b0f17] p-6 transition-all hover:-translate-y-1 hover:border-[#566582]"
+            >
+              <div className="flex items-center gap-5">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-[#f4c95d]/60 bg-[#16120a] text-[#f4c95d]">
+                  <Plus size={28} />
+                </div>
+                <div>
+                  <h3 className="mb-2 text-[22px] font-semibold text-white">
+                    Nueva escena
+                  </h3>
+                  <p className="text-[#aeb6c8]">
+                    Creá una rutina 
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
+
+      {isMobile ? (
+        <button
+          type="button"
+          onClick={handleOpenCreateScene}
+          className="fixed bottom-24 right-5 z-30 inline-flex items-center gap-2 rounded-full bg-[#f4bd49] px-5 py-4 text-[15px] font-medium text-[#111111] shadow-[0_18px_44px_rgba(244,189,73,0.26)] transition-transform hover:scale-[1.01]"
+        >
+          <Plus size={18} />
+          Nueva escena
+        </button>
+      ) : null}
 
       <CreateSceneDialog
         open={isCreateDialogOpen}
@@ -582,14 +593,13 @@ export function Escenas() {
       />
 
       <Dialog open={Boolean(selectedScene)} onOpenChange={(open) => !open && handleCloseSceneDetails()}>
-        <DialogContent className="w-[min(96vw,980px)] overflow-hidden border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] sm:max-h-[88vh] sm:rounded-[32px] [&>button]:text-[#8b96ab]">
+        <DialogContent className="w-[min(96vw,980px)] overflow-hidden border border-[#20283a] bg-[#0e1218] p-0 text-white shadow-[0_32px_120px_rgba(0,0,0,0.6)] sm:max-h-[88vh] sm:rounded-[32px] [&>button]:top-4 [&>button]:right-4 [&>button]:flex [&>button]:h-9 [&>button]:w-9 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:border [&>button]:border-[#2b3042] [&>button]:bg-[#151a25] [&>button]:text-[#c4c8d6] [&>button]:opacity-100 [&>button]:transition-colors [&>button]:hover:bg-[#1c2231] [&>button]:hover:text-white">
           {selectedScene ? (
             <div className="flex max-h-[88vh] flex-col overflow-hidden">
               <div className="relative border-b border-[#20283a] px-5 pb-5 pt-6 sm:px-8">
-                <div className="absolute inset-x-0 top-0 h-24 bg-[radial-gradient(circle_at_top,rgba(240,196,92,0.38),rgba(240,196,92,0.08)_35%,transparent_70%)]" />
                 <div className="relative">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="flex min-w-0 items-start gap-4">
+                    <div className="flex min-w-0 items-center gap-4">
                       <div
                         className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] border ${
                           selectedScene.isActive
@@ -600,7 +610,7 @@ export function Escenas() {
                         {sceneTypeMeta[selectedScene.sceneType].icon(24)}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
+                        <p className="text-[13px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">
                           Escena
                         </p>
                         <DialogTitle className="mt-2 text-[30px] font-semibold text-white">
@@ -612,79 +622,12 @@ export function Escenas() {
                       </div>
                     </div>
 
-                    <div className="flex w-full items-center justify-between gap-3 lg:w-auto lg:justify-end">
-                      <span
-                        className={`rounded-full border px-3 py-2 text-sm font-medium ${
-                          selectedScene.isActive
-                            ? "border-[#d6a339]/40 bg-[#15120b] text-[#f4c95d]"
-                            : "border-[#2b3548] bg-[#151b28] text-[#cdd4e2]"
-                        }`}
-                      >
-                        {getSceneStatusText(selectedScene)}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => toggleScene(selectedScene.id)}
-                        aria-label={
-                          selectedScene.isActive
-                            ? `Desactivar ${selectedScene.name}`
-                            : `Activar ${selectedScene.name}`
-                        }
-                        className={`relative inline-flex h-[36px] w-[62px] items-center rounded-full p-[2px] transition-colors ${
-                          selectedScene.isActive ? "bg-[#fbbf24]" : "bg-[#454955]"
-                        }`}
-                      >
-                        <span
-                          className={`inline-block h-[32px] w-[32px] rounded-full bg-white transition-transform ${
-                            selectedScene.isActive ? "translate-x-[26px]" : "translate-x-0"
-                          }`}
-                        />
-                      </button>
-                    </div>
                   </div>
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-8 sm:py-6">
                 <div className="space-y-5">
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-[22px] border border-[#252e3f] bg-[#121722] p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
-                        Tipo
-                      </p>
-                      <p className="mt-3 text-[20px] font-semibold text-white">
-                        {sceneTypeMeta[selectedScene.sceneType].label}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-[#98a2b7]">
-                        {sceneTypeMeta[selectedScene.sceneType].description}
-                      </p>
-                    </div>
-
-                    <div className="rounded-[22px] border border-[#252e3f] bg-[#121722] p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
-                        Dispositivos
-                      </p>
-                      <p className="mt-3 text-[20px] font-semibold text-white">
-                        {selectedScene.devices.length}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-[#98a2b7]">
-                        Configurados dentro de esta escena.
-                      </p>
-                    </div>
-
-                    <div className="rounded-[22px] border border-[#252e3f] bg-[#121722] p-4">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f8aa3]">
-                        Activación
-                      </p>
-                      <p className="mt-3 text-[20px] font-semibold text-white">
-                        {selectedScene.isActive ? "Encendida" : "Apagada"}
-                      </p>
-                      <p className="mt-2 text-sm leading-6 text-[#98a2b7]">
-                        Podés cambiar el estado desde la lista o desde este detalle.
-                      </p>
-                    </div>
-                  </div>
-
                   <div className="rounded-[26px] border border-[#252e3f] bg-[#121722] p-5">
                     <div className="mb-4 flex items-center gap-3">
                       <div className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[#d6a339]/40 bg-[#15120b] text-[#f4c95d]">
@@ -780,14 +723,6 @@ export function Escenas() {
                  
                   </p>
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCloseSceneDetails}
-                      className="h-11 rounded-[18px] border border-[#2b3548] bg-[#141a26] px-5 text-[#d0d6e3] hover:bg-[#192131] hover:text-white"
-                    >
-                      Cerrar
-                    </Button>
                     <Button
                       type="button"
                       variant="outline"
