@@ -358,14 +358,14 @@ export function AlarmModal({
                     onClick={resetPinState}
                     className="flex-1 rounded-[18px] border border-[#2b3548] bg-[#141a26] py-3 text-sm font-medium text-[#d0d6e3]"
                   >
-                    Cancelar
+                    CANCELAR
                   </button>
                   <button
                     type="button"
                     onClick={handleConfirmPin}
                     className="flex-1 rounded-[18px] border border-[#f0c45c] bg-[#171208] py-3 text-sm font-medium text-[#f0c45c]"
                   >
-                    Confirmar
+                    CONFIRMAR
                   </button>
                 </div>
               </div>

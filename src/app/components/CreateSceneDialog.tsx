@@ -83,7 +83,7 @@ interface CreateSceneDialogProps {
 const spaceData: Spaces = {
   sala: {
     id: "sala",
-    name: "Sala de Estar",
+    name: "Sala de estar",
     icon: <Armchair size={22} />,
     devices: [
       { kind: "lamp", color: "text-yellow-500", name: "Luz Principal" },
@@ -963,11 +963,11 @@ export function CreateSceneDialog({
                   className="h-11 rounded-[18px] border border-[#2b3548] bg-[#141a26] px-5 text-[#d0d6e3] hover:bg-[#192131] hover:text-white"
                 >
                   {currentStep === 0 ? (
-                    "Cancelar"
+                    "CANCELAR"
                   ) : (
                     <>
                       <ChevronLeft size={16} />
-                      Atrás
+                      ATRÁS
                     </>
                   )}
                 </Button>
@@ -978,7 +978,7 @@ export function CreateSceneDialog({
                     onClick={handleSave}
                     className="h-11 rounded-[18px] border border-[#d6a339] bg-[#151d2a] px-5 text-[#f0c45c] hover:bg-[#1b2434]"
                   >
-                    {isEditing ? "Guardar cambios" : "Guardar escena"}
+                    {isEditing ? "GUARDAR CAMBIOS" : "GUARDAR ESCENA"}
                   </Button>
                 ) : (
                   <Button
@@ -986,7 +986,7 @@ export function CreateSceneDialog({
                     onClick={handleNextStep}
                     className="h-11 rounded-[18px] border border-[#d6a339] bg-[#151d2a] px-5 text-[#f0c45c] hover:bg-[#1b2434]"
                   >
-                    Continuar
+                    CONTINUAR
                     <ChevronRight size={16} />
                   </Button>
                 )}

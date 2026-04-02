@@ -7,7 +7,11 @@ import {
   User,
   Users,
 } from "lucide-react";
-import { COMPACT_LAYOUT_BREAKPOINT, useIsMobile } from "../hooks/useIsMobile";
+import {
+  COMPACT_LAYOUT_BREAKPOINT,
+  useIsLandscape,
+  useIsMobile,
+} from "../hooks/useIsMobile";
 import { getAccountInitials, useAccount } from "../context/account-context";
 import {
   DropdownMenu,
@@ -31,6 +35,8 @@ const secondaryNavItem = {
 export function Root() {
   const location = useLocation();
   const isMobile = useIsMobile(COMPACT_LAYOUT_BREAKPOINT);
+  const isLandscape = useIsLandscape();
+  const isLandscapeCompact = isMobile && isLandscape;
   const SecondaryIcon = secondaryNavItem.icon;
   const { accountOptions, selectedAccount, setSelectedAccount, setSessionClosed } =
     useAccount();
@@ -45,44 +51,107 @@ export function Root() {
   if (isMobile) {
     return (
       <div className="min-h-screen bg-[#000000] text-white">
-        <div className="mx-auto w-full max-w-[920px] pb-24">
+        <div
+          className={`mx-auto w-full max-w-[920px] ${isLandscapeCompact ? "pb-8" : "pb-24"}`}
+          style={
+            isLandscapeCompact
+              ? {
+                  paddingLeft: "calc(max(env(safe-area-inset-left), 0.75rem) + 5.5rem)",
+                  paddingRight: "max(env(safe-area-inset-right), 0.75rem)",
+                }
+              : undefined
+          }
+        >
           <Outlet />
         </div>
 
-        <nav className="fixed bottom-0 left-0 right-0 border-t border-[#1f2432] bg-[#080a10]/96 backdrop-blur-xl">
-          <div className="mx-auto flex h-[72px] w-full max-w-[920px] items-center justify-center gap-3 px-5">
-            {primaryNavItems.map(({ path, label, icon: Icon }) => {
-              const active = isActive(path);
-
-              return (
-                <Link
-                  key={path}
-                  to={path}
-                  className={`flex min-w-[132px] items-center justify-center gap-3 rounded-[20px] border px-4 py-3 transition-all ${
-                    active
-                      ? "border-[#f4c95d] bg-[#131822] text-[#f4c95d]"
-                      : "border-[#262d3d] bg-[#10141d] text-[#aab3c8]"
-                  }`}
-                >
-                  <Icon size={20} />
-                  <span className="text-sm font-medium">{label}</span>
-                </Link>
-              );
-            })}
-
-            <Link
-              to={secondaryNavItem.path}
-              aria-label={secondaryNavItem.label}
-              className={`flex min-w-[64px] items-center justify-center rounded-[20px] border px-4 py-3 transition-all ${
-                isActive(secondaryNavItem.path)
-                  ? "border-[#f4c95d] bg-[#131822] text-[#f4c95d]"
-                  : "border-[#262d3d] bg-[#10141d] text-[#aab3c8]"
-              }`}
+        {isLandscapeCompact ? (
+          <div
+            className="pointer-events-none fixed inset-y-0 left-0 z-40 flex items-center"
+            style={{
+              paddingLeft: "max(env(safe-area-inset-left), 0.75rem)",
+            }}
+          >
+            <nav
+              aria-label="Navegación principal"
+              className="pointer-events-auto flex flex-col gap-2 rounded-[26px] border border-[#1f2432] bg-[#080a10]/94 p-2.5 shadow-[0_24px_70px_rgba(0,0,0,0.48)] backdrop-blur-xl"
             >
-              <Settings size={20} />
-            </Link>
+              {primaryNavItems.map(({ path, label, icon: Icon }) => {
+                const active = isActive(path);
+
+                return (
+                  <Link
+                    key={path}
+                    to={path}
+                    className={`flex w-[68px] flex-col items-center justify-center gap-2 rounded-[22px] border px-2 py-3 text-center transition-all ${
+                      active
+                        ? "border-[#f4c95d] bg-[#131822] text-[#f4c95d] shadow-[0_14px_28px_rgba(244,201,93,0.16)]"
+                        : "border-[#262d3d] bg-[#10141d] text-[#aab3c8]"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-9 w-9 items-center justify-center rounded-[14px] ${
+                        active
+                          ? "bg-[#0a0d13] text-[#f4c95d]"
+                          : "bg-[#171c28] text-[#aab3c8]"
+                      }`}
+                    >
+                      <Icon size={17} />
+                    </div>
+                    <span className="text-[10px] font-medium leading-tight">{label}</span>
+                  </Link>
+                );
+              })}
+
+              <Link
+                to={secondaryNavItem.path}
+                aria-label={secondaryNavItem.label}
+                className={`mt-1 flex h-[48px] w-[48px] items-center justify-center self-center rounded-[16px] border transition-all ${
+                  isActive(secondaryNavItem.path)
+                    ? "border-[#f4c95d] bg-[#131822] text-[#f4c95d]"
+                    : "border-[#262d3d] bg-[#10141d] text-[#aab3c8]"
+                }`}
+              >
+                <Settings size={18} />
+              </Link>
+            </nav>
           </div>
-        </nav>
+        ) : (
+          <nav className="fixed bottom-0 left-0 right-0 border-t border-[#1f2432] bg-[#080a10]/96 backdrop-blur-xl">
+            <div className="mx-auto flex h-[72px] w-full max-w-[920px] items-center justify-center gap-3 px-5">
+              {primaryNavItems.map(({ path, label, icon: Icon }) => {
+                const active = isActive(path);
+
+                return (
+                  <Link
+                    key={path}
+                    to={path}
+                    className={`flex min-w-[132px] items-center justify-center gap-3 rounded-[20px] border px-4 py-3 transition-all ${
+                      active
+                        ? "border-[#f4c95d] bg-[#131822] text-[#f4c95d]"
+                        : "border-[#262d3d] bg-[#10141d] text-[#aab3c8]"
+                    }`}
+                  >
+                    <Icon size={20} />
+                    <span className="text-sm font-medium">{label}</span>
+                  </Link>
+                );
+              })}
+
+              <Link
+                to={secondaryNavItem.path}
+                aria-label={secondaryNavItem.label}
+                className={`flex min-w-[64px] items-center justify-center rounded-[20px] border px-4 py-3 transition-all ${
+                  isActive(secondaryNavItem.path)
+                    ? "border-[#f4c95d] bg-[#131822] text-[#f4c95d]"
+                    : "border-[#262d3d] bg-[#10141d] text-[#aab3c8]"
+                }`}
+              >
+                <Settings size={20} />
+              </Link>
+            </div>
+          </nav>
+        )}
       </div>
     );
   }
@@ -95,7 +164,7 @@ export function Root() {
             Mi hogar
           </p>
           <h1 className="mt-3 text-[35px] font-semibold text-white">
-            Panel Principal
+            Panel principal
           </h1>
         </div>
 

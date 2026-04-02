@@ -40,7 +40,11 @@ import {
   type SpaceKind,
   useHome,
 } from "../context/home-context";
-import { COMPACT_LAYOUT_BREAKPOINT, useIsMobile } from "../hooks/useIsMobile";
+import {
+  COMPACT_LAYOUT_BREAKPOINT,
+  useIsLandscape,
+  useIsMobile,
+} from "../hooks/useIsMobile";
 import { AlarmModal } from "./AlarmModal";
 import { DeviceDetailControls } from "./DeviceDetailControls";
 import {
@@ -91,6 +95,8 @@ export function Espacios() {
   };
 
   const isMobile = useIsMobile(COMPACT_LAYOUT_BREAKPOINT);
+  const isLandscape = useIsLandscape();
+  const isLandscapeCompact = isMobile && isLandscape;
   const navigate = useNavigate();
   const { accountOptions, selectedAccount, setSelectedAccount, sessionClosed, setSessionClosed } =
     useAccount();
@@ -203,22 +209,13 @@ export function Espacios() {
     { id: "door", label: "Puerta", icon: <DoorOpen size={20} />, description: "Acceso" },
   ];
 
-  const selectedNewShortcutKinds = new Set(newHomeShortcuts.map((shortcut) => shortcut.kind));
-  const availableNewShortcutOptions = homeShortcuts.filter(
-    (shortcut) => !selectedNewShortcutKinds.has(shortcut.id),
-  );
+  const availableNewShortcutOptions = homeShortcuts;
 
-  const selectedEditShortcutKinds = new Set(editHomeShortcuts.map((shortcut) => shortcut.kind));
-  const availableEditShortcutOptions = homeShortcuts.filter(
-    (shortcut) => !selectedEditShortcutKinds.has(shortcut.id),
-  );
+  const availableEditShortcutOptions = homeShortcuts;
 
   const addShortcutToHome = () => {
     const trimmedName = draftShortcutName.trim();
     if (!draftShortcutKind || !trimmedName) return;
-
-    const alreadyExists = newHomeShortcuts.some((shortcut) => shortcut.kind === draftShortcutKind);
-    if (alreadyExists) return;
 
     const newShortcut: HomeShortcut = {
       id: `${draftShortcutKind}-${Date.now()}`,
@@ -240,7 +237,7 @@ export function Espacios() {
 
   const homeSteps = [
     { id: "details", label: "Detalles" },
-    { id: "shortcuts", label: "Shortcuts" },
+    { id: "shortcuts", label: "Favoritos" },
   ];
 
   const openEditHomeModal = (homeName: string, homeSubtitle: string) => {
@@ -577,9 +574,6 @@ export function Espacios() {
     const trimmedName = draftEditShortcutName.trim();
     if (!draftEditShortcutKind || !trimmedName) return;
 
-    const alreadyExists = editHomeShortcuts.some((shortcut) => shortcut.kind === draftEditShortcutKind);
-    if (alreadyExists) return;
-
     const newShortcut: HomeShortcut = {
       id: `${draftEditShortcutKind}-${Date.now()}`,
       kind: draftEditShortcutKind,
@@ -606,7 +600,7 @@ export function Espacios() {
             onClick={() => setSessionClosed(false)}
             className="mt-6 rounded-[18px] bg-[#f4bd49] px-5 py-3 text-sm font-medium text-[#111111] transition-colors hover:bg-[#efb32e]"
           >
-            Volver a entrar
+            VOLVER A ENTRAR
           </button>
         </div>
       </div>
@@ -684,8 +678,7 @@ export function Espacios() {
             <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-[#f4bd49]/60 bg-[#16120a] text-[#f4bd49]">
               <Plus size={26} />
             </div>
-            <p className="mt-4 text-[18px] font-medium text-white">Nuevo espacio</p>
-          
+            <p className="mt-4 text-[18px] font-medium text-white">NUEVO ESPACIO</p>
           </button>
         )}
       </div>
@@ -695,14 +688,14 @@ export function Espacios() {
           Todavía no hay espacios en {currentHome.name}
         </p>
         
-        <button
-          type="button"
-          onClick={openSpaceModal}
-          className="mt-6 inline-flex items-center gap-2 rounded-[18px] bg-[#f4bd49] px-5 py-3 text-[15px] font-medium text-[#111111] transition-colors hover:bg-[#efb32e]"
-        >
-          <Plus size={16} />
-          Nuevo espacio
-        </button>
+          <button
+            type="button"
+            onClick={openSpaceModal}
+            className="mt-6 inline-flex items-center gap-2 rounded-[18px] bg-[#f4bd49] px-5 py-3 text-[15px] font-medium text-[#111111] transition-colors hover:bg-[#efb32e]"
+          >
+            <Plus size={16} />
+            NUEVO ESPACIO
+          </button>
       </div>
     );
  
@@ -711,14 +704,14 @@ export function Espacios() {
       <div className="relative">
         <div className={isMobile ? "relative px-5 pb-10 pt-7" : "relative mx-auto max-w-7xl px-12 py-10"}>
           <div className={isMobile ? "space-y-6" : "space-y-8"}>
-            <div className={isMobile ? "grid grid-cols-[minmax(0,1fr)_60px_60px] items-stretch gap-3" : "flex items-end justify-between gap-6"}>
+            <div className={isMobile ? "grid grid-cols-[minmax(0,1fr)_60px] items-start gap-3" : "flex items-end justify-between gap-6"}>
               <DropdownMenu>
                 <div className={isMobile ? "relative min-w-0" : "relative"}>
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
                       className={`group flex items-start justify-between rounded-[30px] border border-[#2b3448] bg-[#111723]/92 text-left shadow-[0_18px_52px_rgba(0,0,0,0.18)] transition-all hover:border-[#44506a] ${
-                        isMobile ? "w-full min-w-0 px-4 py-5 pr-12" : "px-5 py-5 pr-16"
+                        isMobile ? "w-full min-w-0 min-h-[132px] px-4 py-5 pr-20" : "px-5 py-5 pr-16"
                       }`}
                     >
                       <div className="min-w-0">
@@ -734,6 +727,11 @@ export function Espacios() {
                         <p className="mt-2 text-[15px] leading-6 text-[#97a0b4]">
                           {currentHome.subtitle}
                         </p>
+                        {isMobile ? (
+                          <p className="mt-4 text-[13px] font-medium text-[#c7cfde]">
+                            {currentHome.alarm.zones.filter((zone) => zone.armed).length} zonas activas
+                          </p>
+                        ) : null}
                       </div>
                     </button>
                   </DropdownMenuTrigger>
@@ -742,12 +740,26 @@ export function Espacios() {
                     type="button"
                     onClick={() => openEditHomeModal(currentHome.name, currentHome.subtitle)}
                     aria-label="Editar hogar seleccionado"
-                    className={`absolute top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-[#3d4962] bg-[#151a25] text-[#d2d8e6] transition-colors hover:border-[#5a6b8f] hover:text-white ${
-                      isMobile ? "right-4" : "right-5"
+                    className={`absolute inline-flex h-9 w-9 items-center justify-center rounded-full border border-[#3d4962] bg-[#151a25] text-[#d2d8e6] transition-colors hover:border-[#5a6b8f] hover:text-white ${
+                      isMobile ? "right-4 top-4" : "right-5 top-1/2 -translate-y-1/2"
                     }`}
                   >
                     <Pencil size={16} />
                   </button>
+
+                  {isMobile ? (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setIsAlarmModalOpen(true);
+                      }}
+                      className={`absolute bottom-4 right-4 inline-flex h-12 w-12 items-center justify-center rounded-[18px] border shadow-[0_18px_40px_rgba(0,0,0,0.18)] transition-all hover:border-[#55627f] ${alarmButtonMeta.classes}`}
+                      aria-label={`Abrir alarma: ${alarmModeLabels[currentHome.alarm.mode]}`}
+                    >
+                      <AlarmButtonIcon size={20} />
+                    </button>
+                  ) : null}
                 </div>
  
                 <DropdownMenuContent
@@ -788,40 +800,26 @@ export function Espacios() {
                     className="mt-3 flex w-full items-center justify-center gap-2 rounded-[20px] border border-dashed border-[#3d4962] bg-[#151a25] px-4 py-3 text-[14px] font-medium text-[#d2d8e6] transition-colors hover:border-[#5a6b8f]"
                   >
                     <Plus size={16} />
-                    Agregar hogar
+                    AGREGAR HOGAR
                   </button>
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {isMobile ? (
-                <button
-                  type="button"
-                  onClick={() => setIsAlarmModalOpen(true)}
-                  className={`shrink-0 rounded-[30px] border shadow-[0_18px_52px_rgba(0,0,0,0.18)] transition-all hover:border-[#55627f] ${alarmButtonMeta.classes} flex h-[60px] w-[60px] items-center justify-center rounded-[22px] p-0`}
-                  aria-label={`Abrir alarma: ${alarmModeLabels[currentHome.alarm.mode]}`}
-                >
-                  <div className="flex h-9 w-9 items-center justify-center rounded-[18px] border border-current/30 bg-black/10">
-                    <AlarmButtonIcon size={18} />
-                  </div>
-                </button>
-              ) : (
+              {isMobile ? null : (
                 <div className="flex items-stretch gap-4">
                   {headerShortcuts.length > 0 ? (
                     <div className="min-w-[320px] rounded-[30px] border border-[#252d3f] bg-[#111723]/92 px-4 py-4 shadow-[0_18px_52px_rgba(0,0,0,0.18)]">
                       <div className="flex items-center justify-between gap-4">
                         <div>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7f879c]">
-                            Shortcuts
-                          </p>
-                          <p className="mt-1 text-sm text-[#98a2b7]">
-                            Controles rápidos del hogar
-                          </p>
+                          <h2 className="text-[30px] font-semibold text-white">
+                            Favoritos
+                          </h2>
                         </div>
                         <Link
                           to="/shortcuts"
                           className="rounded-full border border-[#2d3649] bg-[#151b28] px-3 py-1.5 text-[12px] font-medium text-[#d5dbea] transition-colors hover:border-[#44506a] hover:text-white"
                         >
-                          Gestionar
+                          GESTIONAR
                         </Link>
                       </div>
 
@@ -946,17 +944,14 @@ export function Espacios() {
             {isMobile && headerShortcuts.length > 0 ? (
               <div className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[#7f879c]">
-                      Shortcuts
-                    </p>
-                    
-                  </div>
+                  <h2 className="text-[30px] font-semibold text-white">
+                    Favoritos
+                  </h2>
                   <Link
                     to="/shortcuts"
                     className="rounded-full border border-[#2d3649] bg-[#151b28] px-3 py-1.5 text-[12px] font-medium text-[#d5dbea]"
                   >
-                    Gestionar
+                    GESTIONAR
                   </Link>
                 </div>
 
@@ -995,7 +990,7 @@ export function Espacios() {
                                 isActive ? "text-current/70" : "text-[#7f879c]"
                               }`}
                             >
-                              {shortcutMeta?.description ?? "Shortcut"}
+                              {shortcutMeta?.description ?? "Favorito"}
                             </p>
                           </div>
                         </button>
@@ -1006,21 +1001,19 @@ export function Espacios() {
               </div>
             ) : null}
  
-            <div className={isMobile ? "space-y-3" : "flex items-end justify-between gap-6"}>
-              <div>
-                
-                <h2 className={isMobile ? "mt-2 text-[30px] font-semibold text-white" : "mt-3 text-[36px] font-semibold text-white"}>
+            <div className="flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <h2 className={isMobile ? "text-[30px] font-semibold text-white" : "mt-3 text-[36px] font-semibold text-white"}>
                   Espacios
                 </h2>
-                
               </div>
  
               {isMobile ? (
-                <span className="inline-flex w-fit items-center rounded-full border border-[#2d3649] bg-[#151b28] px-3 py-1 text-[12px] font-medium text-[#d5dbea]">
+                <span className="inline-flex shrink-0 items-center rounded-full border border-[#2d3649] bg-[#151b28] px-3 py-1 text-[12px] font-medium text-[#d5dbea]">
                   {currentHome.spaces.length} espacios
                 </span>
               ) : (
-                <span className="inline-flex items-center rounded-full border border-[#2d3649] bg-[#151b28] px-3 py-2 text-[13px] font-medium text-[#d5dbea]">
+                <span className="inline-flex shrink-0 items-center rounded-full border border-[#2d3649] bg-[#151b28] px-3 py-2 text-[13px] font-medium text-[#d5dbea]">
                   {currentHome.spaces.length} espacios
                 </span>
               )}
@@ -1034,10 +1027,20 @@ export function Espacios() {
           <button
             type="button"
             onClick={openSpaceModal}
-            className="fixed bottom-24 right-5 z-30 inline-flex items-center gap-2 rounded-full bg-[#f4bd49] px-5 py-4 text-[15px] font-medium text-[#111111] shadow-[0_18px_44px_rgba(244,189,73,0.26)] transition-transform hover:scale-[1.01]"
+            className={`fixed z-30 inline-flex items-center gap-2 rounded-full bg-[#f4bd49] px-5 py-4 text-[15px] font-medium text-[#111111] shadow-[0_18px_44px_rgba(244,189,73,0.26)] transition-transform hover:scale-[1.01] ${
+              isLandscapeCompact ? "bottom-4 right-4" : "bottom-24 right-5"
+            }`}
+            style={
+              isLandscapeCompact
+                ? {
+                    bottom: "max(env(safe-area-inset-bottom), 1rem)",
+                    right: "max(env(safe-area-inset-right), 1rem)",
+                  }
+                : undefined
+            }
           >
             <Plus size={18} />
-            Nuevo espacio
+            NUEVO ESPACIO
           </button>
         )}
  
@@ -1058,7 +1061,7 @@ export function Espacios() {
             <div className="absolute inset-x-0 top-0 h-28 bg-[radial-gradient(circle_at_top,rgba(240,196,92,0.38),rgba(240,196,92,0.08)_35%,transparent_70%)]" />
             <div className="relative border-b border-[#20283a] px-6 pb-4 pt-6 sm:px-8">
               <DialogTitle className="text-[24px] font-semibold text-white">
-                Nuevo Espacio
+                Nuevo espacio
               </DialogTitle>
               <DialogDescription className="mt-2 text-sm text-[#98a2b7]">
                 Panel visual simple para la presentación.
@@ -1139,7 +1142,7 @@ export function Espacios() {
                     : "border-[#2b3548] bg-[#141a26] text-[#6b7280]"
                 }`}
               >
-                Agregar espacio
+                AGREGAR ESPACIO
               </button>
             </div>
           </div>
@@ -1200,7 +1203,7 @@ export function Espacios() {
                     : "border-[#202636] bg-[#202636] text-[#6b7280]"
                 }`}
               >
-                Agregar hogar
+                AGREGAR HOGAR
               </button>
             </div>
           </div>
@@ -1261,7 +1264,7 @@ export function Espacios() {
                     : "border-[#202636] bg-[#202636] text-[#6b7280]"
                 }`}
               >
-                Guardar cambios
+                GUARDAR CAMBIOS
               </button>
             </div>
           </div>
@@ -1284,7 +1287,7 @@ export function Espacios() {
                     {activeShortcut?.name}
                   </DialogTitle>
                   <DialogDescription className="mt-2 text-sm text-[#7f879c]">
-                    Configurá encendido y atributos del shortcut.
+                    Configurá encendido y atributos del favorito.
                   </DialogDescription>
                 </div>
                 <button
@@ -1336,7 +1339,7 @@ export function Espacios() {
                                 : "border-[#2b3448] bg-[#151b28] text-[#717a8f]"
                             }`}
                           >
-                            {control.on ? "Apagar" : "Prender"}
+                            {control.on ? "APAGAR" : "PRENDER"}
                           </button>
                         </div>
                       ) : null}
@@ -1475,7 +1478,7 @@ export function Espacios() {
                         onClick={() => setActiveShortcut(null)}
                         className="w-full rounded-[20px] border border-[#2b3042] bg-[#151a25] py-3 text-[14px] font-medium text-[#d2d8e6] transition-colors hover:border-[#5a6b8f]"
                       >
-                        Cerrar
+                        CERRAR
                       </button>
                     </>
                   );
@@ -1502,7 +1505,7 @@ export function Espacios() {
                     Control de puerta
                   </DialogTitle>
                   <DialogDescription className="mt-2 text-sm text-[#7f879c]">
-                    Elegí la acción para este shortcut.
+                    Elegí la acción para este favorito.
                   </DialogDescription>
                 </div>
                 <button
@@ -1552,7 +1555,7 @@ export function Espacios() {
                     onClick={() => setActiveDoorShortcut(null)}
                     className="w-full rounded-[18px] border border-[#2b3548] bg-[#141a26] px-4 py-3 text-sm font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
                   >
-                    Cerrar
+                    CERRAR
                   </button>
                 </>
               ) : null}
@@ -1673,7 +1676,7 @@ export function Espacios() {
                 }}
                 className="flex-1 rounded-[18px] border border-[#2b3548] bg-[#141a26] px-4 py-3 text-[15px] font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
               >
-                Cancelar
+                CANCELAR
               </button>
               <button
                 type="button"
@@ -1687,7 +1690,7 @@ export function Espacios() {
                 disabled={!draftAlarmName.trim()}
                 className="flex-1 rounded-[18px] border border-[#f4bd49] bg-[#15110a] px-4 py-3 text-[15px] font-medium text-[#f4bd49] transition-colors hover:bg-[#1b1408] disabled:border-[#3d3d3d] disabled:bg-[#1a1a1a] disabled:text-[#666666]"
               >
-                Crear alarma
+                CREAR ALARMA
               </button>
             </div>
           </div>
@@ -1725,7 +1728,7 @@ export function Espacios() {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
-                <span className="text-[15px] font-medium text-white">Modo Casa</span>
+                <span className="text-[15px] font-medium text-white">Modo casa</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -1739,13 +1742,13 @@ export function Espacios() {
                   }`}
                 >
                   {(activeAlarm && (alarmOptionsById[activeAlarm.id] ?? getDefaultAlarmOptions()).houseModeOn)
-                    ? "Desativar"
-                    : "Activar"}
+                    ? "DESACTIVAR"
+                    : "ACTIVAR"}
                 </button>
               </div>
 
               <div className="flex items-center justify-between rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
-                <span className="text-[15px] font-medium text-white">Modo Regular</span>
+                <span className="text-[15px] font-medium text-white">Modo regular</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -1759,13 +1762,13 @@ export function Espacios() {
                   }`}
                 >
                   {(activeAlarm && (alarmOptionsById[activeAlarm.id] ?? getDefaultAlarmOptions()).regularModeOn)
-                    ? "Desativar"
-                    : "Activar"}
+                    ? "DESACTIVAR"
+                    : "ACTIVAR"}
                 </button>
               </div>
 
               <div className="flex items-center justify-between rounded-[20px] border border-[#2b3042] bg-[#1d2230] px-4 py-4">
-                <span className="text-[15px] font-medium text-white">Cambiar Codigo de Seguridad</span>
+                <span className="text-[15px] font-medium text-white">Cambiar código de seguridad</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -1774,7 +1777,7 @@ export function Espacios() {
                   }}
                   className="rounded-[16px] border border-[#2b3548] bg-[#141a26] px-4 py-2 text-[13px] font-medium text-[#d0d6e3] transition-colors hover:border-[#5a6b8f] hover:text-white"
                 >
-                  Cambiar
+                  CAMBIAR
                 </button>
               </div>
             </div>
@@ -1855,14 +1858,14 @@ export function Espacios() {
                 }}
                 className="w-full rounded-[18px] border border-[#2b3548] bg-[#141a26] py-3 text-[15px] font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
               >
-                Cancelar
+                CANCELAR
               </button>
               <button
                 type="button"
                 onClick={confirmSecurityCodeAndToggleMode}
                 className="w-full rounded-[18px] border border-[#f4bd49] bg-[#15110a] py-3 text-[15px] font-medium text-[#f4bd49] transition-colors hover:bg-[#1b1408]"
               >
-                Confirmar
+                CONFIRMAR
               </button>
             </div>
           </div>
@@ -1962,14 +1965,14 @@ export function Espacios() {
                 }}
                 className="w-full rounded-[18px] border border-[#2b3548] bg-[#141a26] py-3 text-[15px] font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
               >
-                Cancelar
+                CANCELAR
               </button>
               <button
                 type="button"
                 onClick={confirmChangeSecurityCode}
                 className="w-full rounded-[18px] border border-[#f4bd49] bg-[#15110a] py-3 text-[15px] font-medium text-[#f4bd49] transition-colors hover:bg-[#1b1408]"
               >
-                Cambiar
+                CAMBIAR
               </button>
             </div>
           </div>

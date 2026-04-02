@@ -9,7 +9,7 @@ export interface Account {
 const accountOptions: Account[] = [
   { id: "matias", name: "Matías Ibarra", email: "matias@mihogar.app" },
   { id: "sofia", name: "Sofía Costa", email: "sofia@mihogar.app" },
-  { id: "invitado", name: "Cuenta Invitada", email: "invitado@mihogar.app" },
+  { id: "invitado", name: "Cuenta invitada", email: "invitado@mihogar.app" },
 ];
 
 interface AccountContextValue {

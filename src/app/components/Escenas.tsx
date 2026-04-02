@@ -1,7 +1,6 @@
 import {
   BookOpen,
   Edit3,
-  ChevronRight,
   Film,
   Heart,
   Moon,
@@ -123,7 +122,7 @@ const sceneSpaceCatalog: Record<
   { name: string; devices: Array<{ name: string; kind: DeviceKind }> }
 > = {
   sala: {
-    name: "Sala de Estar",
+    name: "Sala de estar",
     devices: [
       { name: "Luz Principal", kind: "lamp" },
       { name: "Luz Ambiental", kind: "lamp" },
@@ -525,15 +524,6 @@ export function Escenas() {
           </button>
         </div>
 
-        <div className="mt-5 flex items-center justify-between border-t border-[#20283a] pt-4">
-          <p className="text-sm text-[#8f97ab]">
-            {scene.isActive ? "Escena activa ahora" : "Ver detalles de la escena"}
-          </p>
-          <div className="flex items-center gap-2 text-sm font-medium text-[#f4c95d]">
-            <span>Detalle</span>
-            <ChevronRight size={16} />
-          </div>
-        </div>
       </div>
     );
   };
@@ -581,7 +571,7 @@ export function Escenas() {
           className="fixed bottom-24 right-5 z-30 inline-flex items-center gap-2 rounded-full bg-[#f4bd49] px-5 py-4 text-[15px] font-medium text-[#111111] shadow-[0_18px_44px_rgba(244,189,73,0.26)] transition-transform hover:scale-[1.01]"
         >
           <Plus size={18} />
-          Nueva escena
+          NUEVA ESCENA
         </button>
       ) : null}
 
@@ -694,7 +684,7 @@ export function Escenas() {
                                               : "border-[#2b3548] bg-[#151b28] text-[#cdd4e2]"
                                           }`}
                                         >
-                                          {isActive ? "ON" : "OFF"}
+                                          {isActive ? "ACTIVO" : "INACTIVO"}
                                         </span>
                                       </div>
                                     );
@@ -732,14 +722,14 @@ export function Escenas() {
                       className="h-11 rounded-[18px] border border-[#2b3548] bg-[#141a26] px-5 text-[#d0d6e3] hover:bg-[#192131] hover:text-white"
                     >
                       <Edit3 size={16} />
-                      Editar escena
+                      EDITAR ESCENA
                     </Button>
                     <Button
                       type="button"
                       onClick={() => toggleScene(selectedScene.id)}
                       className="h-11 rounded-[18px] border border-[#d6a339] bg-[#151d2a] px-5 text-[#f0c45c] hover:bg-[#1b2434]"
                     >
-                      {selectedScene.isActive ? "Desactivar escena" : "Activar escena"}
+                      {selectedScene.isActive ? "DESACTIVAR ESCENA" : "ACTIVAR ESCENA"}
                     </Button>
                   </div>
                 </div>

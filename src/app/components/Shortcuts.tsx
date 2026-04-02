@@ -20,10 +20,7 @@ export function Shortcuts() {
     { id: "sprinkler", label: "Aspersor", icon: Droplet },
   ];
 
-  const existingKinds = new Set((currentHome.shortcuts ?? []).map((shortcut) => shortcut.kind));
-  const totalShortcuts = currentHome.shortcuts ?? [];
-  const canAddMoreShortcuts = totalShortcuts.length < 5;
-  const availableShortcutTypes = shortcutTypeOptions.filter((option) => !existingKinds.has(option.id) && canAddMoreShortcuts);
+  const availableShortcutTypes = shortcutTypeOptions;
   const existingShortcuts = (currentHome.shortcuts ?? []).filter((shortcut) => shortcut.kind !== "alarm");
 
   const getShortcutMeta = (kind: HomeShortcutKind) =>
@@ -34,14 +31,6 @@ export function Shortcuts() {
     if (!newShortcutKind || !trimmedName) return;
 
     const currentShortcuts = currentHome.shortcuts ?? [];
-    
-    if (currentShortcuts.length >= 5) {
-      return;
-    }
-
-    if (currentShortcuts.some((shortcut) => shortcut.kind === newShortcutKind)) {
-      return;
-    }
 
     const nextShortcuts = [
       ...currentShortcuts,
@@ -66,9 +55,9 @@ export function Shortcuts() {
   return (
     <div className={isMobile ? "px-6 pb-20 pt-12" : "mx-auto max-w-5xl px-12 py-8"}>
       <div className={isMobile ? "mb-8" : "mb-10"}>
-        <h1 className={isMobile ? "mb-2 text-3xl" : "mb-3 text-4xl"}>Shortcuts</h1>
+        <h1 className={isMobile ? "mb-2 text-3xl" : "mb-3 text-4xl"}>Favoritos</h1>
         <p className="text-gray-400">
-          Creá accesos directos para controlar tus dispositivos favoritos desde cualquier lado.
+          Creá accesos rápidos para controlar tus dispositivos favoritos desde cualquier lugar.
         </p>
       </div>
 
@@ -96,7 +85,7 @@ export function Shortcuts() {
                     <h3 className={isMobile ? "text-[18px] font-semibold text-white" : "text-[20px] font-semibold text-white"}>
                       {shortcut.name || "Sin nombre"}
                     </h3>
-                    <p className="text-[14px] text-[#aeb6c8]">{shortcutMeta?.label ?? "Shortcut"}</p>
+                    <p className="text-[14px] text-[#aeb6c8]">{shortcutMeta?.label ?? "Favorito"}</p>
                   </div>
                 </div>
 
@@ -104,7 +93,7 @@ export function Shortcuts() {
                   type="button"
                   onClick={() => handleDeleteShortcut(shortcut.id)}
                   className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] text-[#e94b3c]/70 transition-colors hover:bg-[#e94b3c]/10 hover:text-[#e94b3c]"
-                  title="Eliminar shortcut"
+                  title="Eliminar favorito"
                 >
                   <Trash2 size={20} />
                 </button>
@@ -130,10 +119,10 @@ export function Shortcuts() {
               </div>
               <div>
                 <h3 className={isMobile ? "mb-1 text-[18px] font-semibold text-white" : "mb-2 text-[20px] font-semibold text-white"}>
-                  Nuevo shortcut
+                  Nuevo favorito
                 </h3>
                 <p className="text-[#aeb6c8]">
-                  Agregá un acceso directo 
+                  Agregá un acceso rápido
                 </p>
               </div>
             </div>
@@ -142,7 +131,7 @@ export function Shortcuts() {
 
         {isComposerOpen && (
           <div className="rounded-[24px] border border-[#2b3042] bg-[#111723] p-5 sm:p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">Crear nuevo shortcut</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#7f879c]">Crear favorito</p>
 
             <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {availableShortcutTypes.map((option) => {
@@ -172,7 +161,7 @@ export function Shortcuts() {
                 type="text"
                 value={newShortcutName}
                 onChange={(event) => setNewShortcutName(event.target.value)}
-                placeholder="Nombre del shortcut"
+                placeholder="Nombre del favorito"
                 className="w-full bg-transparent text-sm text-white outline-none placeholder:text-[#6b7280]"
               />
             </div>
@@ -187,7 +176,7 @@ export function Shortcuts() {
                 }}
                 className="flex-1 rounded-[18px] border border-[#2b3548] bg-[#141a26] py-3 text-[15px] font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
               >
-                Cancelar
+                CANCELAR
               </button>
               <button
                 type="button"
@@ -195,7 +184,7 @@ export function Shortcuts() {
                 disabled={!newShortcutKind || !newShortcutName.trim()}
                 className="flex-1 rounded-[18px] border border-[#f4bd49] bg-[#15110a] py-3 text-[15px] font-medium text-[#f4bd49] transition-colors hover:bg-[#1b1408] disabled:border-[#3d3d3d] disabled:bg-[#1a1a1a] disabled:text-[#666666]"
               >
-                Crear
+                CREAR
               </button>
             </div>
           </div>

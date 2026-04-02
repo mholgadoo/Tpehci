@@ -304,7 +304,7 @@ export const deviceTypeLabels: Record<DeviceType, string> = {
 };
 
 export const spaceTypeOptions: SpaceOption[] = [
-  { id: "sala", name: "Sala de Estar", icon: Armchair },
+  { id: "sala", name: "Sala de estar", icon: Armchair },
   { id: "dormitorio", name: "Dormitorio", icon: Bed },
   { id: "cocina", name: "Cocina", icon: ChefHat },
   { id: "bano", name: "Baño", icon: Bath },
@@ -796,7 +796,7 @@ export function getSpaceIcon(kind: SpaceKind, size = 28, strokeWidth = 1.8) {
 const initialHomes: Home[] = [
   {
     id: "mi-hogar",
-    name: "Mi Hogar",
+    name: "Mi hogar",
     subtitle: "Palermo, Buenos Aires",
     shortcuts: defaultShortcutsByHome["mi-hogar"],
     alarm: createAlarmSystem("armed_home", [
@@ -808,7 +808,7 @@ const initialHomes: Home[] = [
     spaces: [
       {
         id: "sala",
-        name: "Sala de Estar",
+        name: "Sala de estar",
         kind: "sala",
         devices: [
           createDevice("luz-principal", "Luz Principal", "lamp", "on", 80),
@@ -895,7 +895,7 @@ const initialHomes: Home[] = [
   },
   {
     id: "casa-playa",
-    name: "Casa de Playa",
+    name: "Casa de playa",
     subtitle: "Pinamar, Buenos Aires",
     shortcuts: defaultShortcutsByHome["casa-playa"],
     alarm: createAlarmSystem("disarmed", [
@@ -905,7 +905,7 @@ const initialHomes: Home[] = [
     spaces: [
       {
         id: "sala",
-        name: "Sala de Estar",
+        name: "Sala de estar",
         kind: "sala",
         devices: [
           createDevice("luz-sala-playa", "Luz Principal", "lamp", "on", 75),
@@ -955,7 +955,7 @@ const initialHomes: Home[] = [
       },
       {
         id: "cocina",
-        name: "Office",
+        name: "Oficina",
         kind: "cocina",
         devices: [
           createDevice("luz-office", "Luz", "lamp", "on", 70),

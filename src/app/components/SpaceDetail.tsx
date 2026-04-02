@@ -248,7 +248,7 @@ export function SpaceDetail() {
                     : "bg-[#202636] text-[#6b7280] border-[#202636]"
                 }`}
               >
-                Agregar Dispositivo
+                AGREGAR DISPOSITIVO
               </button>
             </div>
           </div>
@@ -327,7 +327,7 @@ export function SpaceDetail() {
                   onClick={handleCloseDeviceDetails}
                   className="w-full rounded-[18px] border border-[#2b3548] bg-[#141a26] px-4 py-3 text-sm font-medium text-[#d0d6e3] transition-colors hover:bg-[#192131] hover:text-white"
                 >
-                  Cerrar
+                  CERRAR
                 </button>
               </div>
             </div>
@@ -476,7 +476,7 @@ export function SpaceDetail() {
                   onClick={handleCloseDeviceDetails}
                   className="inline-flex items-center justify-center rounded-[18px] border border-[#2b3042] bg-[#151a25] px-5 py-3 text-[15px] font-medium text-[#d0d6e3] transition-colors hover:border-[#44506a] hover:text-white"
                 >
-                  Cerrar
+                  CERRAR
                 </button>
                 <button
                   type="button"
@@ -484,7 +484,7 @@ export function SpaceDetail() {
                   className="inline-flex items-center justify-center gap-2 rounded-[18px] border border-[#8f3949] bg-[#2a141a] px-5 py-3 text-[15px] font-medium text-[#ffb4c0] transition-colors hover:bg-[#341820]"
                 >
                   <Trash2 size={16} />
-                  Eliminar dispositivo
+                  ELIMINAR DISPOSITIVO
                 </button>
               </div>
             </div>
@@ -505,13 +505,13 @@ export function SpaceDetail() {
  
             <AlertDialogFooter className="mt-2">
               <AlertDialogCancel className="rounded-[18px] border border-[#2b3548] bg-[#141a26] text-[#d0d6e3] hover:bg-[#192131] hover:text-white">
-                Cancelar
+                CANCELAR
               </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDeleteSelectedDevice}
                 className="rounded-[18px] border border-[#8f3949] bg-[#2a141a] text-[#ffb4c0] hover:bg-[#341820]"
               >
-                Sí, eliminar
+                SÍ, ELIMINAR
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -670,7 +670,7 @@ export function SpaceDetail() {
                   <Plus size={24} />
                 </div>
                 <div>
-                  <p className="font-medium text-[#d2d8e6]">Agregar dispositivo</p>
+                  <p className="font-medium text-[#d2d8e6]">AGREGAR DISPOSITIVO</p>
                   <p className="text-sm text-[#8f97ab]">Sumá otro control al espacio.</p>
                 </div>
               </button>
@@ -686,7 +686,7 @@ export function SpaceDetail() {
           className="fixed bottom-24 right-6 z-40 inline-flex items-center gap-3 rounded-full border border-[#f4c95d] bg-[#0f1219] px-5 py-3 text-[15px] font-medium text-[#f4c95d] shadow-[0_18px_40px_rgba(0,0,0,0.45)] transition-colors hover:bg-[#151a25]"
         >
           <Plus size={18} />
-          Agregar dispositivo
+          AGREGAR DISPOSITIVO
         </button>
       ) : null}
 
@@ -707,13 +707,13 @@ export function SpaceDetail() {
 
           <AlertDialogFooter className="mt-2">
             <AlertDialogCancel className="rounded-[18px] border border-[#2b3548] bg-[#141a26] text-[#d0d6e3] hover:bg-[#192131] hover:text-white">
-              Cancelar
+              CANCELAR
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteSpace}
               className="rounded-[18px] border border-[#8f3949] bg-[#2a141a] text-[#ffb4c0] hover:bg-[#341820]"
             >
-              Sí, eliminar
+              SÍ, ELIMINAR
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
