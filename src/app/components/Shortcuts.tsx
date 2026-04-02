@@ -118,12 +118,9 @@ export function Shortcuts() {
                 <Plus size={28} />
               </div>
               <div>
-                <h3 className={isMobile ? "mb-1 text-[18px] font-semibold text-white" : "mb-2 text-[20px] font-semibold text-white"}>
-                  Nuevo favorito
+                <h3 className={isMobile ? "text-[18px] font-semibold text-white" : "text-[18px] font-semibold text-white"}>
+                  NUEVO FAVORITO
                 </h3>
-                <p className="text-[#aeb6c8]">
-                  Agregá un acceso rápido
-                </p>
               </div>
             </div>
           </div>

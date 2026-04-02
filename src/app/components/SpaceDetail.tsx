@@ -670,8 +670,7 @@ export function SpaceDetail() {
                   <Plus size={24} />
                 </div>
                 <div>
-                  <p className="font-medium text-[#d2d8e6]">AGREGAR DISPOSITIVO</p>
-                  <p className="text-sm text-[#8f97ab]">Sumá otro control al espacio.</p>
+                  <p className="font-medium text-[#d2d8e6]">NUEVO DISPOSITIVO</p>
                 </div>
               </button>
             ) : null}
@@ -686,7 +685,7 @@ export function SpaceDetail() {
           className="fixed bottom-24 right-6 z-40 inline-flex items-center gap-3 rounded-full border border-[#f4c95d] bg-[#0f1219] px-5 py-3 text-[15px] font-medium text-[#f4c95d] shadow-[0_18px_40px_rgba(0,0,0,0.45)] transition-colors hover:bg-[#151a25]"
         >
           <Plus size={18} />
-          AGREGAR DISPOSITIVO
+          NUEVO DISPOSITIVO
         </button>
       ) : null}
 

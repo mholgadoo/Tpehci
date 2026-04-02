@@ -550,14 +550,9 @@ export function Escenas() {
                 <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-[#f4c95d]/60 bg-[#16120a] text-[#f4c95d]">
                   <Plus size={28} />
                 </div>
-                <div>
-                  <h3 className="mb-2 text-[22px] font-semibold text-white">
-                    Nueva escena
-                  </h3>
-                  <p className="text-[#aeb6c8]">
-                    Creá una rutina 
-                  </p>
-                </div>
+                <h3 className="text-[18px] font-semibold text-white">
+                  NUEVA ESCENA
+                </h3>
               </div>
             </div>
           )}
